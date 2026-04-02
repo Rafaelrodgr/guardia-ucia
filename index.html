@@ -1,0 +1,2241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guardia UCIA</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0f1a;--surface:#111827;--surface2:#1a2235;--border:#1e2d45;
+  --accent:#00d4ff;--accent2:#00ff9d;--warn:#ff6b35;--danger:#ff3b5c;
+  --purple:#a78bfa;--yellow:#fbbf24;--pink:#f472b6;--text:#e2eaf5;--muted:#4a6080;
+  --green:#00ff9d;--orange:#ff6b35;
+  --mono:"DM Mono",monospace;--sans:"Syne",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(0,212,255,.03)1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.03)1px,transparent 1px);
+  background-size:40px 40px;}
+.app{position:relative;z-index:1;max-width:1000px;margin:0 auto;padding:20px 14px;}
+
+/* Header */
+header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+.logo h1{font-size:20px;font-weight:800;color:var(--accent);}
+.logo span{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:2px;display:block;margin-top:2px;}
+.hdr-right{text-align:right;}
+#clock{font-family:var(--mono);font-size:18px;color:var(--text);display:block;}
+#dateDisp{font-family:var(--mono);font-size:11px;color:var(--muted);}
+#syncBadge{font-family:var(--mono);font-size:10px;margin-top:3px;color:var(--muted);}
+
+/* Tabs */
+.tabs{display:flex;gap:3px;margin-bottom:14px;background:var(--surface);padding:3px;border-radius:10px;border:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.tab{flex:1;min-width:60px;padding:8px 5px;border:none;background:transparent;color:var(--muted);font-family:var(--sans);font-size:10px;font-weight:600;cursor:pointer;border-radius:7px;transition:all .2s;white-space:nowrap;}
+.tab.active{background:var(--surface2);color:var(--accent);border:1px solid var(--border);}
+.tab:hover:not(.active){color:var(--text);}
+.panel{display:none;}.panel.active{display:block;}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:10px;}
+.card-title{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+.sep{border:none;border-top:1px solid var(--border);margin:10px 0;}
+.stitle{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.stitle::after{content:"";flex:1;height:1px;background:var(--border);}
+.empty{text-align:center;padding:32px 16px;color:var(--muted);font-size:12px;}
+.empty-icon{font-size:28px;margin-bottom:8px;}
+
+/* Grid helpers */
+.fg{display:grid;gap:8px;margin-bottom:8px;}
+.fg3{grid-template-columns:85px 1fr 1fr;}
+.fg2{grid-template-columns:1fr 1fr;}
+
+/* Form elements */
+input,textarea,select{background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:12px;padding:8px 11px;width:100%;transition:border-color .2s;outline:none;}
+input:focus,textarea:focus,select:focus{border-color:var(--accent);}
+input::placeholder,textarea::placeholder{color:var(--muted);}
+textarea{resize:vertical;min-height:55px;}
+label{font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:3px;}
+select option{background:var(--surface2);}
+
+/* Buttons */
+.btn{padding:7px 13px;border:none;border-radius:8px;font-family:var(--sans);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;}
+.btn-p{background:var(--accent);color:var(--bg);}.btn-p:hover{opacity:.85;}
+.btn-g{background:transparent;color:var(--muted);border:1px solid var(--border);}.btn-g:hover{color:var(--text);border-color:var(--muted);}
+.btn-d{background:transparent;color:var(--danger);border:1px solid transparent;padding:4px 8px;font-size:10px;}.btn-d:hover{border-color:var(--danger);}
+.btn-s{background:transparent;color:var(--accent2);border:1px solid var(--border);padding:4px 8px;font-size:10px;}.btn-s:hover{border-color:var(--accent2);}
+.btn-w{background:transparent;color:var(--warn);border:1px solid var(--border);padding:4px 8px;font-size:10px;}.btn-w:hover{border-color:var(--warn);}
+.btn-sm{padding:4px 9px;font-size:10px;}
+.add-row{display:flex;gap:5px;margin-top:6px;flex-wrap:wrap;}
+.add-row input{flex:1;font-size:11px;padding:5px 9px;}
+
+/* Stats */
+.stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:13px;}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;text-align:center;}
+.stat-v{font-family:var(--mono);font-size:20px;font-weight:500;line-height:1;margin-bottom:2px;}
+.stat-l{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+
+/* Badges */
+.badge{font-family:var(--mono);font-size:9px;font-weight:500;padding:2px 6px;border-radius:4px;letter-spacing:.5px;white-space:nowrap;}
+.b-ok{background:rgba(0,255,157,.1);color:var(--accent2);border:1px solid rgba(0,255,157,.2);}
+.b-no{background:rgba(255,59,92,.1);color:var(--danger);border:1px solid rgba(255,59,92,.2);}
+.b-w{background:rgba(255,107,53,.1);color:var(--warn);border:1px solid rgba(255,107,53,.2);}
+.b-a{background:rgba(0,212,255,.1);color:var(--accent);border:1px solid rgba(0,212,255,.2);}
+.b-p{background:rgba(167,139,250,.1);color:var(--purple);border:1px solid rgba(167,139,250,.2);}
+.b-y{background:rgba(251,191,36,.1);color:var(--yellow);border:1px solid rgba(251,191,36,.2);}
+.b-pk{background:rgba(244,114,182,.1);color:var(--pink);border:1px solid rgba(244,114,182,.2);}
+
+/* Patient card */
+.pcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;overflow:hidden;transition:border-color .2s;}
+.pcard:hover{border-color:var(--muted);}
+.pcard.risk-alto{border-left:4px solid var(--danger);}
+.pcard.risk-medio{border-left:4px solid var(--warn);}
+.pcard.risk-bajo{border-left:4px solid var(--accent2);}
+.phdr{display:grid;grid-template-columns:68px 1fr auto;gap:10px;align-items:center;padding:12px 14px;cursor:pointer;}
+.phdr:hover{background:rgba(255,255,255,.015);}
+.pbed{font-family:var(--mono);font-size:15px;font-weight:500;color:var(--accent);}
+.pbed small{display:block;font-size:9px;color:var(--muted);margin-top:1px;letter-spacing:1px;}
+.pname{font-size:13px;font-weight:700;margin-bottom:2px;}
+.pmeta{font-family:var(--mono);font-size:10px;color:var(--muted);}
+.pbadges{display:flex;gap:3px;flex-wrap:wrap;margin-top:4px;}
+.arrow{font-size:14px;color:var(--muted);transition:transform .2s;flex-shrink:0;}
+.arrow.open{transform:rotate(180deg);}
+
+/* Risk indicator */
+.risk-pill{font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:10px;font-weight:700;}
+.risk-pill.alto{background:rgba(255,59,92,.15);color:var(--danger);}
+.risk-pill.medio{background:rgba(255,107,53,.15);color:var(--warn);}
+.risk-pill.bajo{background:rgba(0,255,157,.1);color:var(--accent2);}
+
+/* Detail */
+.pdet{border-top:1px solid var(--border);padding:13px;display:none;}
+.pdet.open{display:block;}
+.dtabs{display:flex;gap:3px;margin-bottom:11px;flex-wrap:wrap;}
+.dtab{padding:5px 9px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:var(--sans);font-size:10px;font-weight:700;cursor:pointer;border-radius:6px;transition:all .2s;}
+.dtab.active{background:var(--surface2);color:var(--accent);border-color:var(--accent);}
+.dpanel{display:none;}.dpanel.active{display:block;}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.dsec{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;}
+.dstitle{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:5px;}
+.dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.d-a{background:var(--accent)}.d-ok{background:var(--accent2)}.d-w{background:var(--warn)}
+.d-p{background:var(--purple)}.d-y{background:var(--yellow)}.d-pk{background:var(--pink)}
+.abar{display:flex;gap:5px;flex-wrap:wrap;align-items:center;padding-top:10px;border-top:1px solid var(--border);margin-top:4px;}
+.dta{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:11px;padding:7px 9px;resize:vertical;min-height:55px;outline:none;}
+.dta:focus{border-color:var(--accent);}
+
+/* Census */
+.cblock{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;}
+.cout{font-family:var(--mono);font-size:11px;line-height:1.9;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:11px;white-space:pre-wrap;word-break:break-word;user-select:all;-webkit-user-select:all;cursor:text;}
+.cpaste{width:100%;background:var(--bg);border:1px dashed var(--accent);border-radius:8px;color:var(--text);font-family:var(--mono);font-size:11px;padding:9px 11px;resize:vertical;min-height:70px;outline:none;}
+.cpaste::placeholder{color:var(--muted);}.cpaste:focus{border-style:solid;}
+.prev-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px;margin-top:7px;}
+.prev-item{display:flex;align-items:flex-start;gap:7px;padding:4px 0;border-bottom:1px solid var(--border);font-size:11px;}
+.prev-item:last-child{border-bottom:none;}
+.dx-row{display:flex;align-items:flex-start;gap:7px;padding:5px 0;border-bottom:1px solid var(--border);}
+.dx-row:last-child{border-bottom:none;}
+.dx-text{flex:1;font-family:var(--mono);font-size:11px;line-height:1.5;}
+.dx-days{color:var(--accent);font-family:var(--mono);font-size:10px;}
+
+/* Scales */
+.scale-blk{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px;margin-bottom:7px;}
+.scale-name{font-size:12px;font-weight:700;color:var(--accent);}
+.scale-from{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px;padding:3px 7px;background:var(--bg);border-radius:4px;border-left:2px solid var(--border);}
+
+/* Pendientes */
+.pend-item{display:flex;align-items:flex-start;gap:6px;padding:5px 0;border-bottom:1px solid var(--border);}
+.pend-item:last-child{border-bottom:none;}
+.pend-item input[type=checkbox]{width:13px;height:13px;accent-color:var(--accent2);cursor:pointer;flex-shrink:0;margin-top:2px;}
+.pend-text{font-size:11px;font-family:var(--mono);}
+.pend-text.done{color:var(--muted);text-decoration:line-through;}
+.pend-meta{font-family:var(--mono);font-size:9px;color:var(--muted);margin-top:1px;}
+.pend-priority{font-family:var(--mono);font-size:9px;padding:1px 5px;border-radius:3px;margin-left:4px;}
+.pp-urgente{background:rgba(255,59,92,.15);color:var(--danger);border:1px solid rgba(255,59,92,.3);}
+.pp-rutina{background:rgba(0,212,255,.08);color:var(--accent);border:1px solid rgba(0,212,255,.2);}
+.pdel{background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:0 2px;flex-shrink:0;}
+.pdel:hover{color:var(--danger);}
+
+/* Global pendientes */
+.gp-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;margin-bottom:7px;display:flex;align-items:flex-start;gap:10px;}
+.gp-item.urgente{border-left:3px solid var(--danger);}
+.gp-item.rutina{border-left:3px solid var(--accent);}
+.gp-bed{font-family:var(--mono);font-size:11px;color:var(--accent);min-width:55px;flex-shrink:0;}
+.gp-name{font-size:12px;font-weight:600;margin-bottom:2px;}
+.gp-meta{font-family:var(--mono);font-size:10px;color:var(--muted);}
+
+/* ATB / Proc / Devices */
+.atb-row,.proc-row,.dev-row{display:flex;align-items:flex-start;gap:7px;padding:6px 0;border-bottom:1px solid var(--border);}
+.atb-row:last-child,.proc-row:last-child,.dev-row:last-child{border-bottom:none;}
+.atb-info,.proc-info,.dev-info{flex:1;}
+.atb-scheme,.proc-name{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--text);}
+.atb-day,.proc-day,.dev-day{font-family:var(--mono);font-size:10px;color:var(--accent);margin-top:1px;}
+.proc-result{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px;}
+.dev-day{color:var(--warn);}
+.dev-group{margin-bottom:9px;}
+.dev-group-title{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;display:flex;align-items:center;gap:5px;}
+
+/* Device alerts */
+.dev-alert{font-family:var(--mono);font-size:9px;color:var(--danger);margin-left:4px;}
+
+/* Notes */
+.note-entry{background:var(--bg);border:1px solid var(--border);border-radius:10px;margin-bottom:7px;overflow:hidden;}
+.note-hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;cursor:pointer;background:var(--surface2);}
+.note-hdr:hover{background:rgba(255,255,255,.02);}
+.note-date{font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:500;}
+.note-typ{font-family:var(--mono);font-size:9px;padding:2px 6px;border-radius:4px;margin-left:6px;}
+.nt-i{background:rgba(167,139,250,.12);color:var(--purple);border:1px solid rgba(167,139,250,.25);}
+.nt-e{background:rgba(0,212,255,.08);color:var(--accent);border:1px solid rgba(0,212,255,.2);}
+.note-body{display:none;padding:12px;}
+.note-body.open{display:block;}
+.note-sec{margin-bottom:9px;}
+.note-lbl{font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;}
+.note-ta{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:11px;padding:7px 9px;resize:vertical;min-height:50px;outline:none;}
+.note-ta:focus{border-color:var(--accent);}
+.note-ta.tall{min-height:75px;}
+.new-note-form{background:var(--surface2);border:1px dashed var(--border);border-radius:10px;padding:12px;margin-bottom:10px;}
+
+/* Logbook */
+.logbook-entry{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;}
+.logbook-date{font-family:var(--mono);font-size:11px;color:var(--accent);font-weight:500;margin-bottom:6px;}
+.logbook-stats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
+.logbook-stat{font-family:var(--mono);font-size:10px;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:2px 7px;}
+
+/* Scale calculator */
+.calc-modal{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:2001;display:none;align-items:center;justify-content:center;padding:16px;}
+.calc-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;max-width:440px;width:100%;max-height:90vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.calc-title{font-size:14px;font-weight:800;color:var(--accent);margin-bottom:14px;}
+.calc-item{padding:8px 0;border-bottom:1px solid var(--border);}
+.calc-item:last-child{border-bottom:none;}
+.calc-label{font-size:12px;font-weight:600;margin-bottom:5px;}
+.calc-result{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--accent2);text-align:center;padding:14px;background:var(--surface2);border-radius:10px;margin-top:12px;}
+.calc-interp{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:center;margin-top:5px;}
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:5px;}
+.calc-opt{padding:6px 10px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:var(--mono);font-size:11px;border-radius:7px;cursor:pointer;text-align:center;transition:all .2s;}
+.calc-opt.sel{background:rgba(0,212,255,.15);color:var(--accent);border-color:var(--accent);}
+.calc-opt:hover:not(.sel){border-color:var(--muted);color:var(--text);}
+
+/* Confirmation modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:2000;display:none;align-items:center;justify-content:center;padding:20px;}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:22px;max-width:300px;width:100%;text-align:center;}
+.modal-msg{font-size:13px;font-weight:600;margin-bottom:18px;line-height:1.5;}
+.modal-btns{display:flex;gap:9px;justify-content:center;}
+
+/* Tratante tags */
+.ttag{display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:2px 7px;font-family:var(--mono);font-size:10px;margin:2px;}
+.ttag button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:0;}
+.ttag button:hover{color:var(--danger);}
+.trow{display:flex;gap:6px;margin-top:6px;}
+.trow input{flex:1;}
+
+/* Doctor groups */
+.doc-block{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;}
+.doc-hdr{padding:12px 15px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.doc-name{font-size:13px;font-weight:700;color:var(--accent);}
+.doc-pts{padding:7px 13px;}
+.doc-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);gap:10px;}
+.doc-row:last-child{border-bottom:none;}
+.doc-bed{font-family:var(--mono);font-size:12px;color:var(--accent);min-width:55px;}
+.sent{opacity:.4;}
+
+/* Revision */
+.rev-item{display:grid;grid-template-columns:65px 1fr auto;gap:10px;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 13px;margin-bottom:7px;}
+.rev-item.nl{border-left:3px solid var(--warn);}
+
+/* Alerts */
+.alert{padding:10px 14px;border-radius:10px;margin-bottom:10px;font-size:12px;display:flex;align-items:center;gap:9px;}
+.al-w{background:rgba(255,107,53,.08);border:1px solid rgba(255,107,53,.25);color:var(--warn);}
+.al-i{background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.25);color:var(--accent);}
+.al-pk{background:rgba(244,114,182,.08);border:1px solid rgba(244,114,182,.25);color:var(--pink);}
+.al-d{background:rgba(255,59,92,.08);border:1px solid rgba(255,59,92,.25);color:var(--danger);}
+
+/* Paste toggle */
+.paste-btn{width:100%;padding:8px;border:1px dashed var(--accent);border-radius:8px;background:rgba(0,212,255,.05);color:var(--accent);font-family:var(--sans);font-size:11px;font-weight:700;cursor:pointer;margin-bottom:8px;transition:all .2s;}
+.paste-btn:hover{background:rgba(0,212,255,.12);}
+.pcollapse{display:none;}.pcollapse.open{display:block;}
+
+/* Guard output */
+.guard-output{font-family:var(--mono);font-size:11px;line-height:1.8;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;white-space:pre-wrap;word-break:break-word;user-select:all;-webkit-user-select:all;cursor:text;}
+
+/* Critical */
+.critical-toggle{background:transparent;border:1px solid var(--border);border-radius:6px;padding:4px 8px;font-family:var(--sans);font-size:10px;font-weight:700;cursor:pointer;color:var(--muted);transition:all .2s;}
+.critical-toggle.active{background:rgba(255,59,92,.1);color:var(--danger);border-color:rgba(255,59,92,.4);}
+.estancia{font-family:var(--mono);font-size:10px;color:var(--yellow);background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:4px;padding:2px 6px;display:inline-block;}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.pcard,.doc-block,.card,.rev-item,.gp-item{animation:fadeIn .2s ease forwards;}
+@keyframes pulse{0%,100%{opacity:.2}50%{opacity:1}}
+.ai-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);animation:pulse 1.2s infinite;}
+.ai-load{display:flex;align-items:center;gap:8px;color:var(--muted);font-family:var(--mono);font-size:11px;padding:12px 0;}
+.ai-dot:nth-child(2){animation-delay:.3s;}.ai-dot:nth-child(3){animation-delay:.6s;}
+
+.semaforo{width:9px;height:9px;border-radius:50%;flex-shrink:0;display:inline-block;margin-right:4px;}
+.sem-verde{background:#22c55e;box-shadow:0 0 5px rgba(34,197,94,.5);}
+.sem-amarillo{background:var(--yellow);box-shadow:0 0 5px rgba(251,191,36,.5);}
+.sem-rojo{background:var(--danger);box-shadow:0 0 6px rgba(255,59,92,.6);}
+.sem-critico{background:var(--danger);box-shadow:0 0 8px rgba(255,59,92,.9);animation:pulseR 1s infinite;}
+@keyframes pulseR{0%,100%{opacity:1}50%{opacity:.4}}
+.ses-entry{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+@media(max-width:600px){
+  .fg3{grid-template-columns:75px 1fr;}
+  .fg2{grid-template-columns:1fr;}
+  .stats-bar{grid-template-columns:repeat(2,1fr);}
+  .dgrid{grid-template-columns:1fr;}
+  .phdr{grid-template-columns:58px 1fr auto;}
+  .rev-item{grid-template-columns:58px 1fr;}
+  .tab{font-size:9px;padding:7px 4px;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo"><h1>GUARDIA UCIA</h1><span>MEDICINA INTERNA R2</span></div>
+    <div class="hdr-right">
+      <span id="clock">--:--</span>
+      <span id="dateDisp"></span>
+      <div id="syncBadge">&#8212; local</div>
+     <button onclick="resetDay()" style="margin-top:5px;background:transparent;border:1px solid var(--bdr);border-radius:6px;padding:3px 9px;font-family:var(--sans);font-size:9px;font-weight:700;cursor:pointer;color:var(--mut);" onmouseover="this.style.color='var(--warn)'" onmouseout="this.style.color='var(--mut)'">&#8635; Nuevo día</button>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('pacientes',this)">Pacientes</button>
+    <button class="tab" onclick="showTab('labs',this)">Labs 5am</button>
+    <button class="tab" onclick="showTab('pendientes',this)">Pendientes</button>
+    <button class="tab" onclick="showTab('sesiones',this)">Sesiones</button>
+    <button class="tab" onclick="showTab('logbook',this)">Logbook</button>
+    <button class="tab" onclick="showTab('guardia',this)">Entrega</button>
+    <button class="tab" onclick="showTab('revision',this)">Revisi&#243;n</button>
+  </div>
+
+  <!-- PACIENTES -->
+  <div id="tab-pacientes" class="panel active">
+    <div class="stats-bar" id="statsBar"></div>
+    <div class="card">
+      <div class="card-title" id="formTitle">Agregar Paciente</div>
+      <button class="paste-btn" onclick="toggleFP()">&#128203; Pegar censo desde Sheets</button>
+      <div class="pcollapse" id="fpSection">
+        <label>Censo completo</label>
+        <textarea class="cpaste" id="fpInput" placeholder="Choque s&#233;ptico SOFA 6pts(29d)+TVP izq(5d)/NAC PSI IV(12d) [25,0]" oninput="prevCensus('fpInput','fpPrev')"></textarea>
+        <div id="fpPrev"></div>
+        <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:7px;margin-bottom:8px">
+          <button class="btn btn-g btn-sm" onclick="toggleFP()">Cancelar</button>
+          <button class="btn btn-p btn-sm" onclick="applyFP()">Aplicar</button>
+        </div>
+      </div>
+      <div class="fg fg3">
+        <div><label>Cama</label><input id="iCama" placeholder="UCIA 1"></div>
+        <div><label>Nombre</label><input id="iNombre" placeholder="Apellido, Nombre"></div>
+        <div><label>Dx resumen</label><input id="iDx" placeholder="Choque s&#233;ptico"></div>
+      </div>
+      <div class="fg fg2">
+        <div><label>Fecha ingreso</label><input type="date" id="iIngreso"></div>
+        <div>
+          <label>Tratantes</label>
+          <div id="tratTags"></div>
+          <div class="trow">
+            <input id="iTrat" placeholder="Dr. Garc&#237;a" onkeydown="if(event.key==='Enter'){addTrat();event.preventDefault();}">
+            <button class="btn btn-g btn-sm" onclick="addTrat()">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="fg fg2">
+        <div><label>IMC</label><input id="iIMC" type="number" step="0.1" placeholder="28.5"></div>
+        <div><label>&#205;ndice tab&#225;quico</label><input id="iIT" type="number" step="0.1" placeholder="20"></div>
+      </div>
+      <hr class="sep">
+      <div style="display:flex;gap:7px;justify-content:flex-end">
+        <button class="btn btn-g" onclick="clearForm()">Cancelar</button>
+        <button class="btn btn-p" onclick="savePatient()">Guardar</button>
+      </div>
+    </div>
+    <div class="stitle">Pacientes en guardia</div>
+    <div id="patientList"></div>
+  </div>
+
+  <!-- LABS -->
+  <div id="tab-labs" class="panel">
+    <div class="alert al-i">&#9889; Un toque marca al tratante completo como enviado.</div>
+    <div id="doctorGroups"></div>
+  </div>
+
+  <!-- PENDIENTES GLOBAL -->
+  <div id="tab-pendientes" class="panel">
+    <div style="display:flex;gap:8px;margin-bottom:13px;flex-wrap:wrap;align-items:center">
+      <div class="stitle" style="flex:1;margin-bottom:0">Pendientes activos</div>
+      <button class="btn btn-g btn-sm" onclick="renderGlobalPend()">&#8635; Actualizar</button>
+    </div>
+    <div id="globalPendList"></div>
+  </div>
+
+  <!-- LOGBOOK -->
+  <div id="tab-sesiones" class="panel">
+    <div class="card">
+      <div class="card-title">Nueva sesión / tema</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div><label>Título</label><input id="sesTitle" placeholder="Manejo de sepsis en UCIA"></div>
+        <div><label>Tipo</label>
+          <select id="sesTipo" style="background:var(--bg);border:1px solid var(--bdr);border-radius:8px;color:var(--txt);font-family:var(--mono);font-size:12px;padding:8px 10px;width:100%">
+            <option value="tema">📚 Tema personal</option>
+            <option value="caso">🏥 Caso clínico</option>
+            <option value="clase">🎓 Clase recibida</option>
+            <option value="referencia">📄 Referencia / artículo</option>
+          </select>
+        </div>
+      </div>
+      <div><label>Notas / contenido</label>
+        <textarea id="sesBody" placeholder="Apuntes, puntos clave, referencias…" style="min-height:80px"></textarea>
+      </div>
+      <hr style="border:none;border-top:1px solid var(--bdr);margin:10px 0">
+      <div style="display:flex;justify-content:flex-end">
+        <button class="btn btn-p" onclick="saveSesion()">Guardar sesión</button>
+      </div>
+    </div>
+    <div class="stitle">Sesiones guardadas</div>
+    <div id="sessionsList"></div>
+  </div>
+
+  <div id="tab-logbook" class="panel">
+    <div style="display:flex;gap:8px;margin-bottom:13px;flex-wrap:wrap;align-items:center">
+      <div class="stitle" style="flex:1;margin-bottom:0">Logbook de guardia</div>
+      <button class="btn btn-p btn-sm" onclick="saveLogbookEntry()">&#128203; Guardar turno</button>
+    </div>
+    <div class="alert al-i" style="margin-bottom:12px">Guarda un resumen autom&#225;tico de cada turno para tu expediente de residencia.</div>
+    <div id="logbookList"></div>
+  </div>
+
+  <!-- ENTREGA -->
+  <div id="tab-guardia" class="panel">
+    <div class="alert al-i">&#128203; Genera el texto de entrega con datos actuales.</div>
+    <div style="display:flex;gap:8px;margin-bottom:13px;flex-wrap:wrap">
+      <button class="btn btn-p" onclick="genEntrega()">Generar entrega</button>
+      <button class="btn btn-g" onclick="copyText('entregaOut')">&#128203; Copiar todo</button>
+    </div>
+    <div id="entregaOut" class="guard-output" style="min-height:80px;color:var(--muted)">(Presiona Generar entrega)</div>
+  </div>
+
+  <!-- REVISION -->
+  <div id="tab-revision" class="panel">
+    <div id="revAlerts"></div>
+    <div class="stitle">Estado por paciente</div>
+    <div id="revisionList"></div>
+  </div>
+</div>
+
+<!-- Confirm modal -->
+<div id="confirmModal" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-msg" id="confirmMsg">&#191;Confirmar?</div>
+    <div class="modal-btns">
+      <button class="btn btn-g" onclick="confirmNo()" style="flex:1">Cancelar</button>
+      <button class="btn btn-p" onclick="confirmYes()" style="flex:1;background:var(--danger)">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Scale calculator modal -->
+<div id="calcModal" class="calc-modal">
+  <div class="calc-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div class="calc-title" id="calcTitle">Calculadora</div>
+      <button class="btn btn-g btn-sm" onclick="closeCalc()">&#215; Cerrar</button>
+    </div>
+    <div id="calcContent"></div>
+    <div class="calc-result" id="calcResult" style="display:none"></div>
+    <div class="calc-interp" id="calcInterp"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+      <button class="btn btn-p btn-sm" onclick="computeCalc()">Calcular</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+function today(){ return new Date().toISOString().slice(0,10); }
+function todayLong(){ return new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); }
+
+// ═══════════════════════════════════════════════════════════════
+// GUARDIA UCIA — Complete App Script
+// ═══════════════════════════════════════════════════════════════
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+var patients = (function(){
+  var raw = JSON.parse(localStorage.getItem('ucia7_p') || '[]');
+  return raw.filter(function(x){ return x && x.id; }).map(function(x){
+    // Ensure all required fields exist for older saved patients
+    if(!x.diagnoses)   x.diagnoses   = [];
+    if(!x.scales)      x.scales      = {};
+    if(!x.pendientes)  x.pendientes  = [];
+    if(!x.notes)       x.notes       = [];
+    if(!x.atb)         x.atb         = [];
+    if(!x.procedures)  x.procedures  = [];
+    if(!x.devices)     x.devices     = {};
+    if(!x.imaging)     x.imaging     = {};
+    if(!x.tratantes)   x.tratantes   = [];
+    if(x.critical === undefined) x.critical = false;
+    if(x.hasLabs === undefined)  x.hasLabs  = false;
+    return x;
+  });
+})();
+var labStatus = JSON.parse(localStorage.getItem('ucia7_l') || '{}');
+var logbook   = JSON.parse(localStorage.getItem('ucia7_log') || '[]');
+var sessions  = JSON.parse(localStorage.getItem('ucia7_ss')  || '[]');
+var curTrats  = [];
+var editingId = null;
+var pendCensus = null;
+
+// ─── FIRESTORE REST ──────────────────────────────────────────────────────────
+var FS_URL = 'https://firestore.googleapis.com/v1/projects/guardia-ucia/databases/(default)/documents/guardia/data?key=AIzaSyAGkv2dvrOWUZa7oU2tYnEkntB3-KNJtgE';
+
+function toFS(v) {
+  if (v === null || v === undefined) return {nullValue: null};
+  if (typeof v === 'boolean')  return {booleanValue: v};
+  if (typeof v === 'number')   return {doubleValue: v};
+  if (typeof v === 'string')   return {stringValue: v};
+  if (Array.isArray(v))        return {arrayValue: {values: v.map(toFS)}};
+  if (typeof v === 'object') {
+    var f = {};
+    Object.keys(v).forEach(function(k) { f[k] = toFS(v[k]); });
+    return {mapValue: {fields: f}};
+  }
+  return {stringValue: String(v)};
+}
+
+function fromFS(fv) {
+  if (!fv) return null;
+  if ('nullValue'    in fv) return null;
+  if ('booleanValue' in fv) return fv.booleanValue;
+  if ('integerValue' in fv) return parseInt(fv.integerValue);
+  if ('doubleValue'  in fv) return Number(fv.doubleValue);
+  if ('stringValue'  in fv) return fv.stringValue;
+  if ('arrayValue'   in fv) return ((fv.arrayValue && fv.arrayValue.values) || []).map(fromFS);
+  if ('mapValue'     in fv) {
+    var o = {};
+    var fields = (fv.mapValue && fv.mapValue.fields) || {};
+    Object.keys(fields).forEach(function(k) { o[k] = fromFS(fields[k]); });
+    return o;
+  }
+  return null;
+}
+
+function setSyncBadge(status) {
+  var el = document.getElementById('syncBadge'); if (!el) return;
+  if (status === 'syncing') { el.style.color = 'var(--yellow)';  el.textContent = '\u29d9 Sincronizando\u2026'; }
+  else if (status === 'ok') { el.style.color = 'var(--accent2)'; el.textContent = '\u2713 Sincronizado';    }
+  else                      { el.style.color = 'var(--danger)';  el.textContent = '\u2717 Sin conexi\u00f3n';     }
+}
+
+function pushFS() {
+  setSyncBadge('syncing');
+  var patchUrl = FS_URL.replace('?key=', '?updateMask.fieldPaths=patients&updateMask.fieldPaths=labStatus&updateMask.fieldPaths=logbook&updateMask.fieldPaths=updatedAt&key=');
+  var body = JSON.stringify({fields: {
+    patients:  toFS(patients),
+    labStatus: toFS(labStatus),
+    logbook:   toFS(logbook),
+    sessions: toFS(sessions),
+    updatedAt: toFS(new Date().toISOString())
+  }});
+  fetch(patchUrl, {method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: body})
+    .then(function(r) { setSyncBadge(r.ok ? 'ok' : 'error'); })
+    .catch(function()  { setSyncBadge('error'); });
+}
+
+function pullFS(cb) {
+  fetch(FS_URL)
+    .then(function(r) {
+      if (r.status === 404) { setSyncBadge('ok'); if (cb) cb(); return; }
+      if (!r.ok) { setSyncBadge('error'); return; }
+      return r.json().then(function(data) {
+        if (data.fields) {
+          var p = fromFS(data.fields.patients);
+          var l = fromFS(data.fields.labStatus);
+          var g = fromFS(data.fields.logbook);
+          if (Array.isArray(p)) {
+            var newHash = JSON.stringify(p);
+            if (newHash !== JSON.stringify(patients)) {
+              patients  = p;
+              labStatus = l || {};
+              logbook   = Array.isArray(g) ? g : logbook;
+              localStorage.setItem('ucia7_p',   JSON.stringify(patients));
+              localStorage.setItem('ucia7_l',   JSON.stringify(labStatus));
+              localStorage.setItem('ucia7_log', JSON.stringify(logbook));
+  localStorage.setItem('ucia7_ss',  JSON.stringify(sessions));
+              if (cb) cb();
+            }
+          }
+        }
+        setSyncBadge('ok');
+      });
+    })
+    .catch(function() { setSyncBadge('error'); });
+}
+
+// ─── PERSIST ─────────────────────────────────────────────────────────────────
+function persist() {
+  localStorage.setItem('ucia7_p',   JSON.stringify(patients));
+  localStorage.setItem('ucia7_l',   JSON.stringify(labStatus));
+  localStorage.setItem('ucia7_log', JSON.stringify(logbook));
+  pushFS();
+}
+
+// ─── CLOCK ───────────────────────────────────────────────────────────────────
+function tickClock() {
+  var n = new Date();
+  document.getElementById('clock').textContent = n.toLocaleTimeString('es-MX', {hour:'2-digit', minute:'2-digit'});
+  document.getElementById('dateDisp').textContent = n.toLocaleDateString('es-MX', {weekday:'short', day:'numeric', month:'short'});
+  setTimeout(tickClock, 1000);
+}
+
+// ─── TABS ────────────────────────────────────────────────────────────────────
+function showTab(tab, el) {
+  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(t)   { t.classList.remove('active'); });
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (el) el.classList.add('active');
+  if      (tab === 'labs')       renderDoctorGroups();
+  else if (tab === 'revision')   renderRevision();
+  else if (tab === 'pendientes') renderGlobalPend();
+  else if (tab === 'guardia')    renderEntrega();
+  else if (tab === 'logbook')    renderLogbook();
+  else if (tab === 'sesiones')   renderSessions();
+  else                           renderAll();
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function diasEst(d) { if (!d) return null; var r = Math.floor((Date.now()-new Date(d+'T00:00:00'))/86400000); return r>=0?r:null; }
+function pcnt(p) { return (p.pendientes||[]).filter(function(x) { return !x.done; }).length; }
+function uid()  { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+
+function fmtDay(n) {
+  if (n >= 365) { return (Math.round((n/365)*10)/10) + 'a'; }
+  if (n >= 90)  { return (Math.round((n/30)*10)/10)  + 'm'; }
+  return n + 'd';
+}
+function fmtDays(arr) {
+  if (!arr || !arr.length) return '';
+  return '(' + arr.map(fmtDay).join(',') + ')';
+}
+
+// ─── CONFIRM MODAL ───────────────────────────────────────────────────────────
+var _confirmCb = null;
+function showConfirm(msg, onYes) {
+  _confirmCb = onYes;
+  document.getElementById('confirmMsg').textContent = msg;
+  document.getElementById('confirmModal').style.display = 'flex';
+}
+function confirmYes() {
+  document.getElementById('confirmModal').style.display = 'none';
+  if (_confirmCb) { _confirmCb(); _confirmCb = null; }
+}
+function confirmNo() {
+  document.getElementById('confirmModal').style.display = 'none';
+  _confirmCb = null;
+}
+
+// ─── COPY ────────────────────────────────────────────────────────────────────
+function copyText(elId) {
+  var el = document.getElementById(elId); if (!el) return;
+  navigator.clipboard.writeText(el.textContent).catch(function() {
+    var r = document.createRange(); r.selectNode(el);
+    window.getSelection().removeAllRanges(); window.getSelection().addRange(r);
+    document.execCommand('copy'); window.getSelection().removeAllRanges();
+  });
+  el.style.borderColor = 'var(--accent2)';
+  setTimeout(function() { el.style.borderColor = ''; }, 1200);
+}
+
+// ─── RISK ASSESSMENT ─────────────────────────────────────────────────────────
+// Computes automatic risk level based on captured data
+function calcRisk(p) {
+  if (!p) return {level:'verde', score:0, alerts:[]};
+  var score = 0, alerts = [];
+  var sofaScore = parseInt(((p.scales||{}).sofa||{}).score||0);
+  if (sofaScore >= 6) { score += 3; alerts.push('SOFA '+sofaScore); }
+  else if (sofaScore >= 4) score += 2;
+  else if (sofaScore >= 2) score += 1;
+  if (p.critical) { score += 3; alerts.push('Crítico'); }
+  var urgPend = (p.pendientes||[]).filter(function(x){ return !x.done && x.prioridad==='urgente'; });
+  if (urgPend.length > 0) { score += 2; alerts.push(urgPend.length+' pend. urgentes'); }
+  var ms = missScales(p);
+  if (ms.length >= 3) { score += 1; alerts.push(ms.length+' escalas pend.'); }
+  var da = devAlerts(p);
+  da.forEach(function(a){ score += 1; alerts.push(a.type+' día '+a.days); });
+  (p.atb||[]).forEach(function(a){
+    var startDate = a.startDate || a.date || '2025-01-01';
+    var d = Math.max(1, Math.floor((Date.now()-new Date(startDate+'T00:00:00'))/86400000)+1);
+    if (d > 14) { score += 1; alerts.push('ATB día '+d); }
+  });
+  var level = 'verde';
+  if (p.critical || score >= 5) level = 'critico';
+  else if (score >= 3) level = 'rojo';
+  else if (score >= 1) level = 'amarillo';
+  return {level:level, score:score, alerts:alerts};
+}
+
+// ─── DEVICE ALERTS ───────────────────────────────────────────────────────────
+var DEVICE_LIMITS = {
+  lineas:    {days: 7,  label: 'L\u00ednea vascular'},
+  cateteres: {days: 7,  label: 'Cat\u00e9ter'},
+  vm:        {days: 21, label: 'VM'},
+  dialisis:  {days: 90, label: 'Di\u00e1lisis/TRRC'},
+};
+
+function getDeviceAlerts(p) {
+  var alerts = [];
+  if (!p.devices) return alerts;
+  Object.keys(DEVICE_LIMITS).forEach(function(key) {
+    var limit = DEVICE_LIMITS[key];
+    var devs  = p.devices[key] || [];
+    devs.forEach(function(d) {
+      var days = deviceDay(d);
+      if (days > limit.days) {
+        alerts.push(limit.label + ': d\u00eda ' + days + ' (' + limit.days + 'd recomendado)');
+      }
+    });
+  });
+  return alerts;
+}
+
+// ─── SCALE CALCULATORS ───────────────────────────────────────────────────────
+var CALCULATORS = {
+  sofa: {
+    name: 'SOFA',
+    fields: [
+      {id:'resp',  label:'PaO\u2082/FiO\u2082', type:'select', opts:[{v:0,l:'> 400'},{v:1,l:'301-400'},{v:2,l:'201-300'},{v:3,l:'\u2264 200 con VM'},{v:4,l:'\u2264 100 con VM'}]},
+      {id:'plt',   label:'Plaquetas (x10\u00b3)', type:'select', opts:[{v:0,l:'> 150'},{v:1,l:'101-150'},{v:2,l:'51-100'},{v:3,l:'21-50'},{v:4,l:'\u2264 20'}]},
+      {id:'bili',  label:'Bilirrubina (mg/dL)', type:'select', opts:[{v:0,l:'< 1.2'},{v:1,l:'1.2-1.9'},{v:2,l:'2.0-5.9'},{v:3,l:'6.0-11.9'},{v:4,l:'> 12'}]},
+      {id:'cardio',label:'Cardiovascular', type:'select', opts:[{v:0,l:'PAM \u2265 70'},{v:1,l:'PAM < 70'},{v:2,l:'Dopa \u2264 5 \u03bcg'},{v:3,l:'Dopa > 5 / Nor \u2264 0.1'},{v:4,l:'Nor > 0.1 / Adren'}]},
+      {id:'neuro', label:'Glasgow', type:'select', opts:[{v:0,l:'15'},{v:1,l:'13-14'},{v:2,l:'10-12'},{v:3,l:'6-9'},{v:4,l:'< 6'}]},
+      {id:'renal', label:'Creatinina (mg/dL)', type:'select', opts:[{v:0,l:'< 1.2'},{v:1,l:'1.2-1.9'},{v:2,l:'2.0-3.4'},{v:3,l:'3.5-4.9 o <500mL/d'},{v:4,l:'> 5.0 o <200mL/d'}]},
+    ],
+    interpret: function(s) {
+      if (s <= 1)  return 'Mortalidad < 1%';
+      if (s <= 3)  return 'Mortalidad \u2248 2%';
+      if (s <= 5)  return 'Mortalidad \u2248 2%';
+      if (s <= 7)  return 'Mortalidad \u2248 15-20%';
+      if (s <= 9)  return 'Mortalidad \u2248 15-20%';
+      if (s <= 11) return 'Mortalidad \u2248 40-50%';
+      return 'Mortalidad > 80%';
+    }
+  },
+  curb65: {
+    name: 'CURB-65',
+    fields: [
+      {id:'conf', label:'Confusi\u00f3n', type:'bool'},
+      {id:'bun',  label:'BUN > 19 mg/dL', type:'bool'},
+      {id:'rr',   label:'FR \u2265 30/min', type:'bool'},
+      {id:'bp',   label:'TAS < 90 o TAD \u2264 60', type:'bool'},
+      {id:'age',  label:'Edad \u2265 65 a\u00f1os', type:'bool'},
+    ],
+    interpret: function(s) {
+      if (s <= 1) return 'Bajo riesgo \u2014 manejo ambulatorio';
+      if (s === 2) return 'Riesgo moderado \u2014 hospitalizaci\u00f3n breve o supervisi\u00f3n estrecha';
+      return 'Alto riesgo \u2014 hospitalizaci\u00f3n, considerar UCI si \u2265 4';
+    }
+  },
+  wells_tvp: {
+    name: 'Wells TVP',
+    fields: [
+      {id:'ca',   label:'C\u00e1ncer activo', type:'bool'},
+      {id:'par',  label:'Par\u00e1lisis/yeso MMII', type:'bool'},
+      {id:'enc',  label:'Encamado > 3d o cirug\u00eda < 12sem', type:'bool'},
+      {id:'ten',  label:'Sensibilidad en trayecto venoso', type:'bool'},
+      {id:'swel', label:'Edema de toda la pierna', type:'bool'},
+      {id:'diff', label:'Edema asim\u00e9trico > 3cm', type:'bool'},
+      {id:'pit',  label:'Edema con fovea en pierna sintom\u00e1tica', type:'bool'},
+      {id:'col',  label:'Venas superficiales colaterales', type:'bool'},
+      {id:'alt',  label:'Diagn\u00f3stico alternativo igual o m\u00e1s probable (-2)', type:'bool', neg:true},
+    ],
+    interpret: function(s) {
+      if (s <= 0) return 'Baja probabilidad (\u2248 5%)';
+      if (s <= 2) return 'Probabilidad moderada (\u2248 17%)';
+      return 'Alta probabilidad (\u2248 53%)';
+    }
+  },
+  wells_tep: {
+    name: 'Wells TEP',
+    fields: [
+      {id:'tvp_sx', label:'S\u00edntomas de TVP', type:'bool'},
+      {id:'alt_dx', label:'Otro dx menos probable', type:'bool'},
+      {id:'hr',     label:'FC > 100 lpm', type:'bool'},
+      {id:'immob',  label:'Inmovilizaci\u00f3n/cirug\u00eda \u2264 4 sem', type:'bool'},
+      {id:'prev',   label:'TVP/TEP previo', type:'bool'},
+      {id:'hemop',  label:'Hemoptisis', type:'bool'},
+      {id:'cancer', label:'C\u00e1ncer activo', type:'bool'},
+    ],
+    interpret: function(s) {
+      if (s <= 1) return 'Probabilidad baja (\u2248 1.3%)';
+      if (s <= 6) return 'Probabilidad moderada (\u2248 16%)';
+      return 'Probabilidad alta (\u2248 41%)';
+    }
+  },
+  bisap: {
+    name: 'BISAP',
+    fields: [
+      {id:'bun',   label:'BUN > 25 mg/dL', type:'bool'},
+      {id:'ams',   label:'Alteraci\u00f3n del estado mental', type:'bool'},
+      {id:'sirs',  label:'SIRS presente', type:'bool'},
+      {id:'age',   label:'Edad > 60 a\u00f1os', type:'bool'},
+      {id:'pleff', label:'Derrame pleural', type:'bool'},
+    ],
+    interpret: function(s) {
+      if (s <= 1) return 'Mortalidad < 1%';
+      if (s === 2) return 'Mortalidad \u2248 2%';
+      if (s === 3) return 'Mortalidad \u2248 5-8%';
+      return 'Mortalidad \u2248 10-22%';
+    }
+  },
+  has_bled: {
+    name: 'HAS-BLED',
+    fields: [
+      {id:'hta',   label:'HTA no controlada (TAS > 160)', type:'bool'},
+      {id:'renal', label:'Disfunci\u00f3n renal', type:'bool'},
+      {id:'liver', label:'Disfunci\u00f3n hep\u00e1tica', type:'bool'},
+      {id:'stroke',label:'ACV previo', type:'bool'},
+      {id:'bleed', label:'Sangrado previo o predisposici\u00f3n', type:'bool'},
+      {id:'inr',   label:'INR l\u00e1bil (< 60% en rango terap\u00e9utico)', type:'bool'},
+      {id:'elder', label:'Edad > 65 a\u00f1os', type:'bool'},
+      {id:'drugs', label:'Drogas o alcohol', type:'bool'},
+    ],
+    interpret: function(s) {
+      if (s <= 1) return 'Riesgo bajo de sangrado';
+      if (s === 2) return 'Riesgo moderado \u2014 considerar con precauci\u00f3n';
+      return 'Riesgo alto de sangrado \u2014 alternativas o vigilancia estrecha';
+    }
+  },
+  glasgow: {
+    name: 'Glasgow',
+    fields: [
+      {id:'eo', label:'Apertura ocular', type:'select', opts:[{v:4,l:'Espont\u00e1nea'},{v:3,l:'Al llamado'},{v:2,l:'Al dolor'},{v:1,l:'Sin respuesta'}]},
+      {id:'vm', label:'Respuesta verbal', type:'select', opts:[{v:5,l:'Orientado'},{v:4,l:'Confuso'},{v:3,l:'Palabras inapropiadas'},{v:2,l:'Sonidos incomprensibles'},{v:1,l:'Sin respuesta'}]},
+      {id:'mr', label:'Respuesta motora', type:'select', opts:[{v:6,l:'Obedece'},{v:5,l:'Localiza'},{v:4,l:'Retira'},{v:3,l:'Flexi\u00f3n'},{v:2,l:'Extensi\u00f3n'},{v:1,l:'Sin respuesta'}]},
+    ],
+    interpret: function(s) {
+      if (s <= 8)  return 'Coma grave \u2014 intubaci\u00f3n indicada';
+      if (s <= 12) return 'Coma moderado';
+      if (s <= 14) return 'Leve alteraci\u00f3n';
+      return 'Normal';
+    }
+  },
+  child: {
+    name: 'Child-Pugh',
+    fields: [
+      {id:'enc',   label:'Encefalopatía', type:'select', opts:[{v:1,l:'Ninguna'},{v:2,l:'Grado I-II'},{v:3,l:'Grado III-IV'}]},
+      {id:'asc',   label:'Ascitis', type:'select', opts:[{v:1,l:'Ninguna'},{v:2,l:'Leve'},{v:3,l:'Moderada/severa'}]},
+      {id:'bili',  label:'Bilirrubina (mg/dL)', type:'select', opts:[{v:1,l:'< 2'},{v:2,l:'2-3'},{v:3,l:'> 3'}]},
+      {id:'alb',   label:'Alb\u00famina (g/dL)', type:'select', opts:[{v:1,l:'> 3.5'},{v:2,l:'2.8-3.5'},{v:3,l:'< 2.8'}]},
+      {id:'inr',   label:'TP/INR', type:'select', opts:[{v:1,l:'< 1.7 / < 4s'},{v:2,l:'1.7-2.3 / 4-6s'},{v:3,l:'> 2.3 / > 6s'}]},
+    ],
+    interpret: function(s) {
+      if (s <= 6)  return 'Clase A \u2014 Sobrevida a 2 a\u00f1os: 85%';
+      if (s <= 9)  return 'Clase B \u2014 Sobrevida a 2 a\u00f1os: 57%';
+      return 'Clase C \u2014 Sobrevida a 2 a\u00f1os: 35%';
+    }
+  },
+};
+
+var _calcPid   = null;
+var _calcSid   = null;
+var _calcState = {};
+
+function openCalc(scaleId, pid) {
+  var calc = CALCULATORS[scaleId]; if (!calc) return;
+  _calcPid   = pid;
+  _calcSid   = scaleId;
+  _calcState = {};
+  document.getElementById('calcTitle').textContent = calc.name;
+  var html = '';
+  calc.fields.forEach(function(f) {
+    html += '<div class="calc-item">';
+    html += '<div class="calc-label">' + esc(f.label) + '</div>';
+    if (f.type === 'bool') {
+      html += '<div class="calc-grid">';
+      html += '<div class="calc-opt" id="co-'+f.id+'-0" onclick="setCalcOpt(\''+f.id+'\','+(f.neg?-1:1)+',this,\'co-'+f.id+'-1\')">S\u00ed ('+(f.neg?'-1':'+1')+')</div>';
+      html += '<div class="calc-opt sel" id="co-'+f.id+'-1" onclick="setCalcOpt(\''+f.id+'\',0,this,\'co-'+f.id+'-0\')">No (+0)</div>';
+      html += '</div>';
+      _calcState[f.id] = 0;
+    } else if (f.type === 'select') {
+      html += '<div class="calc-grid">';
+      f.opts.forEach(function(o, i) {
+        var selCls = i === 0 ? ' sel' : '';
+        html += '<div class="calc-opt'+selCls+'" id="co-'+f.id+'-'+i+'" onclick="setCalcSel(\''+f.id+'\','+o.v+',\''+f.id+'-'+i+'\')">' + esc(o.l) + ' ('+o.v+')</div>';
+      });
+      html += '</div>';
+      _calcState[f.id] = f.opts[0].v;
+    }
+    html += '</div>';
+  });
+  document.getElementById('calcContent').innerHTML = html;
+  document.getElementById('calcResult').style.display = 'none';
+  document.getElementById('calcInterp').textContent = '';
+  document.getElementById('calcModal').style.display = 'flex';
+}
+
+function setCalcOpt(fid, val, el, otherId) {
+  _calcState[fid] = val;
+  el.classList.add('sel');
+  var other = document.getElementById(otherId); if (other) other.classList.remove('sel');
+}
+function setCalcSel(fid, val, optPrefix) {
+  _calcState[fid] = val;
+  var calc = CALCULATORS[_calcSid]; if (!calc) return;
+  var field = calc.fields.find(function(f) { return f.id === fid; });
+  if (field && field.opts) {
+    field.opts.forEach(function(o, i) {
+      var el = document.getElementById('co-'+fid+'-'+i);
+      if (el) el.classList.toggle('sel', i === parseInt(optPrefix.split('-').pop()));
+    });
+  }
+}
+function computeCalc() {
+  var calc = CALCULATORS[_calcSid]; if (!calc) return;
+  var total = 0;
+  Object.keys(_calcState).forEach(function(k) { total += _calcState[k]; });
+  var resEl = document.getElementById('calcResult');
+  var intEl = document.getElementById('calcInterp');
+  resEl.textContent = calc.name + ': ' + total + ' pts';
+  resEl.style.display = 'block';
+  intEl.textContent = calc.interpret(total);
+  // Auto-save to patient
+  if (_calcPid) {
+    var p = patients.find(function(x) { return x.id === _calcPid; });
+    if (p) {
+      if (!p.scales) p.scales = {};
+      p.scales[_calcSid] = {score: String(total)};
+      persist(); reCard(_calcPid);
+    }
+  }
+}
+function closeCalc() { document.getElementById('calcModal').style.display = 'none'; }
+
+// ─── SCALES DB ───────────────────────────────────────────────────────────────
+
+// ─── SCALE DETECTION ─────────────────────────────────────────────────────────
+function detScales(p) {
+  if(!p) return [];
+  var txt = [p.dx||''].concat((p.diagnoses||[]).map(function(d){return d&&d.text?d.text:'';})).join(' ').toLowerCase();
+  return SCALES.filter(function(s) { return s.trg && s.trg.some(function(t) { return txt.indexOf(t) > -1; }); });
+}
+function missScales(p) {
+  if(!p) return [];
+  return detScales(p).filter(function(s) { return !(p.scales||{})[s.id] || !(p.scales||{})[s.id].score; });
+}
+
+// ─── SCALE EXTRACTION FROM TEXT ──────────────────────────────────────────────
+function extractScalesFromText(text, pid) {
+  var p = patients.find(function(x) { return x.id===pid; }); if (!p) return;
+  if (!p.scales) p.scales = {};
+  var found = false;
+  SCALE_EXTRACT_PATTERNS.forEach(function(pat) {
+    var m = text.match(pat.re);
+    if (m) {
+      var score = m[1].toUpperCase();
+      if (!p.scales[pat.id] || !p.scales[pat.id].score) {
+        p.scales[pat.id] = {score: score};
+        found = true;
+      }
+    }
+  });
+  if (found) { persist(); reCard(pid); }
+}
+
+function extractScalesFromAllDx(pid) {
+  var p = patients.find(function(x) { return x.id===pid; }); if (!p) return;
+  (p.diagnoses||[]).forEach(function(d) { extractScalesFromText(d.text, pid); });
+}
+
+// ─── DEV TYPES ───────────────────────────────────────────────────────────────
+var DEV_TYPES = [
+  {key:'lineas',    label:'Líneas vasculares', icon:'💉', placeholder:'CVC subclavia, Art radial, PICC...'},
+  {key:'cateteres', label:'Catéteres',          icon:'🔌', placeholder:'Foley, SNG, drenaje pleural...'},
+  {key:'vm',        label:'Ventilación mecánica',icon:'🫁', placeholder:'VMI, VMNI, OAF, Cánula nasal...'},
+  {key:'dialisis',  label:'Diálisis / TRRC',    icon:'🔄', placeholder:'TRRC, Hemodiálisis, DPI...'},
+];
+
+// ─── CENSUS PARSER ───────────────────────────────────────────────────────────
+function splitOut(text, ch) {
+  var segs=[], depth=0, cur='';
+  for (var i=0; i<text.length; i++) {
+    var c = text[i];
+    if      (c === '(')         { depth++; cur += c; }
+    else if (c === ')')         { depth--; cur += c; }
+    else if (c === ch && depth === 0) { segs.push(cur.trim()); cur = ''; }
+    else cur += c;
+  }
+  if (cur.trim()) segs.push(cur.trim());
+  return segs.filter(function(s) { return s; });
+}
+
+function hasDays(seg) { return /\(\d+[dma](dx)?\)/i.test(seg); }
+
+function extractDays(seg) {
+  var days=[], re=/\(([^)]+)\)/g, m;
+  while ((m = re.exec(seg)) !== null) {
+    m[1].split(',').forEach(function(part) {
+      var mm = part.trim().match(/^(\d+)(d|m|a)(dx)?$/i);
+      if (mm) {
+        var n=parseInt(mm[1]), u=mm[2].toLowerCase();
+        days.push(u==='d'?n : u==='m'?n*30 : n*365);
+      }
+    });
+  }
+  return days.filter(function(x,i,a) { return a.indexOf(x)===i; }).sort(function(a,b) { return a-b; });
+}
+
+function cleanText(seg) { return seg.replace(/\([^)]*\)/g,'').replace(/\s+/g,' ').trim(); }
+
+function parsePlusSegs(slashSeg) {
+  var plusParts = splitOut(slashSeg, '+');
+  if (plusParts.length === 1) return [slashSeg];
+  var partsWithDays = plusParts.map(function(p,i) { return hasDays(p) ? i : -1; }).filter(function(i) { return i >= 0; });
+  var lastIdx = plusParts.length - 1;
+  if (partsWithDays.length === 0 || (partsWithDays.length === 1 && partsWithDays[0] === lastIdx)) return [slashSeg];
+  var merged=[], i=0;
+  while (i < plusParts.length) {
+    var part = plusParts[i];
+    while (i+1 < plusParts.length) {
+      var nxt = plusParts[i+1].replace(/^\s+/,'');
+      if (nxt && nxt[0] === nxt[0].toLowerCase() && nxt[0] !== nxt[0].toUpperCase()) { part += '+' + plusParts[i+1]; i++; }
+      else break;
+    }
+    merged.push(part); i++;
+  }
+  return merged;
+}
+
+function parseCensus(raw) {
+  var result = {diagnoses:[], imc:'', it:''};
+  if (!raw || !raw.trim()) return result;
+  var bm = raw.match(/\[([^\]]+)\]\s*$/);
+  if (bm) {
+    var pts = bm[1].split(',');
+    result.imc = (pts[0]||'').trim(); result.it = (pts[1]||'').trim();
+    raw = raw.slice(0, raw.lastIndexOf(bm[0])).trim();
+  }
+
+  // * separates into parent→child hierarchy when EVERY part has its own days
+  // e.g. "IR(3d)*EPI(3d)*NIU(3a)" → 3 separate dx with parent-child links
+  // but "TEP*Intoxicación(1d)" → stays as one dx (not all parts have days)
+  function splitStar(seg) {
+    var parts = splitOut(seg, '*');
+    if (parts.length === 1) return [{text:seg, isChild:false}];
+    if (parts.every(function(p){ return hasDays(p); })) {
+      return parts.map(function(p, i){ return {text:p, isChild:i>0}; });
+    }
+    return [{text:seg, isChild:false}];
+  }
+
+  splitOut(raw, '/').forEach(function(slashSeg) {
+    parsePlusSegs(slashSeg).forEach(function(plusSeg) {
+      var starred = splitStar(plusSeg);
+      var parentIdx = null;
+      starred.forEach(function(item) {
+        var text = cleanText(item.text), days = extractDays(item.text);
+        if (!text) return;
+        if (!item.isChild) {
+          parentIdx = result.diagnoses.length;
+          result.diagnoses.push({text:text, days:days, parentIdx:null});
+        } else {
+          result.diagnoses.push({text:text, days:days, parentIdx:parentIdx});
+        }
+      });
+    });
+  });
+  return result;
+}
+
+function prevCensus(inpId, prevId) {
+  var raw = (document.getElementById(inpId)||{}).value||'';
+  var el  = document.getElementById(prevId); if (!el) return;
+  if (!raw.trim()) { el.innerHTML=''; return; }
+  var parsed = parseCensus(raw);
+  if (!parsed.diagnoses.length) { el.innerHTML='<div style="color:var(--muted);font-size:11px;padding:6px 0;font-family:var(--mono)">No se detectaron diagnósticos</div>'; return; }
+  var html = '<div class="prev-box"><div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:5px">'+parsed.diagnoses.length+' dx detectados</div>';
+  parsed.diagnoses.forEach(function(d,i) {
+    var ds = d.days.length ? d.days.map(function(x){return x+'d';}).join(',') : 'nuevo hoy';
+    html += '<div class="prev-item"><span style="color:var(--muted);font-family:var(--mono);font-size:10px;min-width:16px">'+(i+1)+'.</span><span style="flex:1;font-family:var(--mono)">'+esc(d.text)+'</span><span style="color:var(--accent);font-family:var(--mono);font-size:10px">'+esc(ds)+'</span></div>';
+  });
+  if (parsed.imc||parsed.it) html += '<div style="padding-top:5px;font-family:var(--mono);font-size:10px;color:var(--muted)">IMC:'+esc(parsed.imc)+' IT:'+esc(parsed.it)+'</div>';
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function makeDxObjs(diagArr, ingresoDate) {
+  var today = ingresoDate || new Date().toISOString().slice(0,10);
+  return diagArr.map(function(d) { return {id:uid(), text:d.text, days:d.days, addedAt:today}; });
+}
+
+// ─── DAY COMPUTATION ─────────────────────────────────────────────────────────
+function elapsedDays(addedAt) { if (!addedAt) return 0; return Math.max(0, Math.floor((Date.now()-new Date(addedAt+'T00:00:00'))/86400000)); }
+function currentDays(d) {
+  var e = elapsedDays(d.addedAt);
+  if (d.days && d.days.length > 0) return d.days.map(function(b) { return b+e; });
+  if (d.baseDay != null) return [d.baseDay+e];
+  return [];
+}
+
+// ─── CENSUS TEXT ─────────────────────────────────────────────────────────────
+function buildCensusText(p) {
+  if (!p.diagnoses || !p.diagnoses.length) return p.dx||'';
+  var parts = p.diagnoses.map(function(d,i) {
+    var cd = currentDays(d);
+    var seg = d.text + (cd.length ? fmtDays(cd) : '');
+    var sf = p.scales||{};
+    var sc = SCALES.filter(function(r) { return r.trg.some(function(t){return d.text.toLowerCase().indexOf(t)>-1;}) && sf[r.id] && sf[r.id].score; }).map(function(r){return r.name+' '+sf[r.id].score;}).join('/');
+    if (sc) seg += ' ' + sc;
+    return (i > 0 ? '/' : '') + seg;
+  });
+  var out = parts.join('');
+  if (p.imc||p.it) out += ' [' + (p.imc||'') + ',' + (p.it||'') + ']';
+  return out;
+}
+
+// ─── NOTES EXPORT ────────────────────────────────────────────────────────────
+function buildNotesExport(p) {
+  if (!p.notes || !p.notes.length) return '(Sin notas registradas)';
+  var lines = ['PACIENTE: '+p.nombre+' — '+p.cama, 'Dx: '+buildCensusText(p), ''];
+  p.notes.slice().sort(function(a,b){return a.isoDate.localeCompare(b.isoDate);}).forEach(function(n) {
+    var secs = n.type==='ingreso' ? ING_SECS : EVO_SECS;
+    lines.push('=== '+(n.type==='ingreso'?'INGRESO':'EVOLUCIÓN')+' — '+n.date+' ===');
+    secs.forEach(function(s) { if (n.data&&n.data[s.id]) { lines.push('['+s.label+']'); lines.push(n.data[s.id]); lines.push(''); }});
+  });
+  return esc(lines.join('\n'));
+}
+
+// ─── FORM PASTE ──────────────────────────────────────────────────────────────
+function toggleFP() { document.getElementById('fpSection').classList.toggle('open'); }
+function applyFP() {
+  var raw = (document.getElementById('fpInput')||{}).value||'';
+  if (!raw.trim()) { alert('Pega el censo primero'); return; }
+  var parsed = parseCensus(raw);
+  if (!parsed.diagnoses.length) { alert('No se detectaron diagnósticos'); return; }
+  pendCensus = parsed;
+  if (parsed.imc) document.getElementById('iIMC').value = parsed.imc;
+  if (parsed.it)  document.getElementById('iIT').value  = parsed.it;
+  document.getElementById('fpInput').value = '';
+  document.getElementById('fpPrev').innerHTML = '';
+  document.getElementById('fpSection').classList.remove('open');
+  document.getElementById('formTitle').textContent = 'Agregar Paciente · ✓ ' + parsed.diagnoses.length + ' dx listos';
+}
+
+// ─── TRATANTES ───────────────────────────────────────────────────────────────
+function addTrat() {
+  var inp=document.getElementById('iTrat'), v=inp.value.trim(); if (!v) return;
+  if (curTrats.indexOf(v) === -1) { curTrats.push(v); renderTratTags(); }
+  inp.value = '';
+}
+function remTrat(name) { curTrats = curTrats.filter(function(t){return t!==name;}); renderTratTags(); }
+function renderTratTags() {
+  document.getElementById('tratTags').innerHTML = curTrats.map(function(t) {
+    return '<span class="ttag">'+esc(t)+' <button onclick="remTrat(\''+esc(t)+'\')">×</button></span>';
+  }).join('');
+}
+
+// ─── FORM SAVE ───────────────────────────────────────────────────────────────
+function clearForm() {
+  ['iCama','iNombre','iDx','iTrat','iIngreso','iIMC','iIT'].forEach(function(id) { var el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('formTitle').textContent = 'Agregar Paciente';
+  document.getElementById('fpInput').value = '';
+  document.getElementById('fpPrev').innerHTML = '';
+  document.getElementById('fpSection').classList.remove('open');
+  curTrats=[]; editingId=null; pendCensus=null; renderTratTags();
+}
+
+function savePatient() {
+  var cama   = document.getElementById('iCama').value.trim();
+  var nombre = document.getElementById('iNombre').value.trim();
+  if (!cama||!nombre) { alert('Cama y nombre son requeridos'); return; }
+  var dx=document.getElementById('iDx').value.trim(), ingreso=document.getElementById('iIngreso').value;
+  var imc=document.getElementById('iIMC').value.trim(), it=document.getElementById('iIT').value.trim();
+  if (editingId) {
+    var idx = patients.findIndex(function(p){return p.id===editingId;});
+    if (idx>-1) patients[idx] = Object.assign({}, patients[idx], {cama:cama, nombre:nombre, dx:dx, ingreso:ingreso, imc:imc, it:it, tratantes:curTrats.slice()});
+    editingId = null;
+  } else {
+    var newP = {id:uid(), cama:cama, nombre:nombre, dx:dx, ingreso:ingreso, imc:imc, it:it,
+      tratantes:curTrats.slice(), hasLabs:false, imaging:{}, cultivos:'', interconsultas:'',
+      pendientes:[], diagnoses:[], scales:{}, censusNote:'', notes:[], atb:[], procedures:[], devices:{}, critical:false};
+    if (pendCensus) { newP.diagnoses = makeDxObjs(pendCensus.diagnoses, ingreso); pendCensus=null; }
+    patients.push(newP);
+  }
+  persist(); clearForm(); renderAll();
+}
+
+function editPatient(id) {
+  var p = patients.find(function(x){return x.id===id;}); if (!p) return;
+  document.getElementById('iCama').value=p.cama||''; document.getElementById('iNombre').value=p.nombre||'';
+  document.getElementById('iDx').value=p.dx||''; document.getElementById('iIngreso').value=p.ingreso||'';
+  document.getElementById('iIMC').value=p.imc||''; document.getElementById('iIT').value=p.it||'';
+  document.getElementById('formTitle').textContent='Editar Paciente';
+  curTrats=(p.tratantes||[]).slice(); editingId=id; renderTratTags();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function deletePatient(id) {
+  var p = patients.find(function(x){return x.id===id;});
+  showConfirm('¿Dar de alta a '+(p?p.nombre:'este paciente')+'?', function() {
+    patients = patients.filter(function(x){return x.id!==id;});
+    Object.keys(labStatus).filter(function(k){return k.indexOf(id)===0;}).forEach(function(k){delete labStatus[k];});
+    persist(); renderAll();
+  });
+}
+
+// ─── IMAGING ─────────────────────────────────────────────────────────────────
+var IMAGING = [{key:'rx_torax',label:'Rx de Tórax'},{key:'rx_otras',label:'Rx otras regiones'},{key:'tac',label:'TAC'}];
+function cycleImg(pid, key) {
+  var p=patients.find(function(x){return x.id===pid;}); if(!p) return;
+  if(!p.imaging) p.imaging={};
+  var cur=p.imaging[key]||'none';
+  p.imaging[key]=cur==='none'?'pedido':cur==='pedido'?'resultado':'none';
+  persist(); reCard(pid);
+}
+
+// ─── PENDIENTES ──────────────────────────────────────────────────────────────
+var EVO_SECS = [
+  {id:'subjetivo',label:'Subjetivo / Síntomas del día',       tall:false},
+  {id:'svef',     label:'Signos vitales y Exploración física', tall:true},
+  {id:'labs',     label:'Laboratorios y estudios del día',     tall:true},
+  {id:'analisis', label:'Análisis y juicio clínico',           tall:true},
+  {id:'plan',     label:'Plan por aparatos y sistemas',        tall:true},
+];
+var ING_SECS = [
+  {id:'hea',          label:'HEA',                          tall:true},
+  {id:'antecedentes', label:'Antecedentes',                 tall:true},
+  {id:'ef',           label:'Exploración física',           tall:true},
+  {id:'labs',         label:'Laboratorios al ingreso',      tall:true},
+  {id:'plan',         label:'Plan',                         tall:true},
+];
+
+function addPend(pid) {
+  var inp=document.getElementById('pi-'+pid); if(!inp) return;
+  var text=inp.value.trim(); if(!text) return;
+  var hora=document.getElementById('ph-'+pid);
+  var prio=document.getElementById('pp-'+pid);
+  var noti=document.getElementById('pn-'+pid);
+  var recr=document.getElementById('pr-'+pid);
+  var p=patients.find(function(x){return x.id===pid;}); if(!p) return;
+  if(!p.pendientes) p.pendientes=[];
+  p.pendientes.push({id:uid(), text:text, done:false,
+    hora:hora?hora.value:'', prioridad:prio?prio.value:'rutina',
+    notificar:noti?noti.value:'', recurrente:recr?recr.checked:false});
+  inp.value=''; if(hora) hora.value=''; if(noti) noti.value=''; if(recr) recr.checked=false;
+  persist(); reCard(pid);
+}
+function togPend(pid, xid) {
+  var p=patients.find(function(x){return x.id===pid;}); if(!p) return;
+  var x=p.pendientes.find(function(y){return y.id===xid;}); if(x){x.done=!x.done; persist(); reCard(pid);}
+}
+function delPend(pid, xid) {
+  var p=patients.find(function(x){return x.id===pid;}); if(!p) return;
+  p.pendientes=p.pendientes.filter(function(y){return y.id!==xid;}); persist(); reCard(pid);
+}
+
+// ─── NOTES ───────────────────────────────────────────────────────────────────
+function saveNote(pid, field) {
+  var p=patients.find(function(x){return x.id===pid;}); if(!p) return;
+  var el=document.getElementById('note-'+field+'-'+pid); if(el){p[field]=el.value; persist();}
+}
+function saveCNote(pid) {
+  var p=patients.find(function(x){return x.id===pid;}); if(!p) return;
+  var el=document.getElementById('cnote-'+pid); if(el){p.censusNote=el.value; persist();}
+}
+function addNote(pid, type) {
+  var p=patients.find(function(x){return x.id===pid;}); if(!p) return;
+  if(!p.notes) p.notes=[];
+  var secs=type==='ingreso'?ING_SECS:EVO_SECS;
+  var today=new Date().toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+  var data={};
+  secs.forEach(function(s){var el=document.getElementById('nn-'+s.id+'-'+pid); data[s.id]=el?el.value.trim():'';});
+  if(!Object.values(data).some(function(v){return v;})) return;
+  p.notes.push({id:uid(), type:type, date:today, isoDate:new Date().toISOString().slice(0,10), data:data});
+  persist(); reCard(pid);
+}
+function delNote(pid, nid) {
+  var p=patients.find(function(x){return x.id===pid;}); if(!p) return;
+  showConfirm('¿Eliminar esta nota?', function(){
+    p.notes=p.notes.filter(function(n){return n.id!==nid;}); persist(); reCard(pid);
+  });
+}
+function togNoteBody(nid) { var el=document.getElementById('nb-'+nid); if(el) el.classList.toggle('open'); }
+
+// ─── DIAGNOSES ───────────────────────────────────────────────────────────────
+function addDx(pid) {
+  var inp=document.getElementById('dxi-'+pid); if(!inp) return;
+  var text=inp.value.trim(); if(!text) return;
+  var p=patients.find(function(x){return x.id===pid;}); if(!p) return;
+  if(!p.diagnoses) p.diagnoses=[];
+  var dayInp=document.getElementById('dxd-'+pid);
+  var raw=dayInp?dayInp.value.trim():'';
+  var days=raw!==''?[parseInt(raw)]:[];
+  var today=new Date().toISOString().slice(0,10);
+  p.diagnoses.unshift({id:uid(), text:text, days:days, addedAt:p.ingreso||today});
+  inp.value=''; if(dayInp) dayInp.value='';
+  persist(); extractScalesFromText(text, pid); reCard(pid);
+}
+function remDx(pid, did) {
+  var p=patients.find(function(x){return x.id===pid;}); if(!p) return;
+  p.diagnoses=p.diagnoses.filter(function(d){return d.id!==did;}); persist(); reCard(pid);
+}
+function applyPasteCensus(pid) {
+  var inp=document.getElementById('cpaste-'+pid); if(!inp||!inp.value.trim()) return;
+  var parsed=parseCensus(inp.value);
+  if(!parsed.diagnoses.length){alert('No se detectaron diagnósticos.');return;}
+  var p=patients.find(function(x){return x.id===pid;}); if(!p) return;
+  p.diagnoses=makeDxObjs(parsed.diagnoses, p.ingreso);
+  if(parsed.imc) p.imc=parsed.imc; if(parsed.it) p.it=parsed.it;
+  inp.value=''; var pv=document.getElementById('cprev-'+pid); if(pv) pv.innerHTML='';
+  persist(); extractScalesFromAllDx(pid); reCard(pid);
+}
+
+// ─── SCALES ──────────────────────────────────────────────────────────────────
+function saveScale(pid, sid) {
+  var p=patients.find(function(x){return x.id===pid;}); if(!p) return;
+  if(!p.scales) p.scales={};
+  var el=document.getElementById('sc-'+sid+'-'+pid);
+  if(el){p.scales[sid]={score:el.value}; persist(); reCard(pid);}
+}
+
+// ─── ATB ─────────────────────────────────────────────────────────────────────
+function addAtb(pid) {
+  var inp=document.getElementById('atbi-'+pid); if(!inp) return;
+  var scheme=inp.value.trim(); if(!scheme) return;
+  var p=patients.find(function(x){return x.id===pid;}); if(!p) return;
+  if(!p.atb) p.atb=[];
+  p.atb.unshift({id:uid(), scheme:scheme, startDate:new Date().toISOString().slice(0,10)});
+  inp.value=''; persist(); reCard(pid);
+}
+function delAtb(pid, aid) {
+  var p=patients.find(function(x){return x.id===pid;}); if(!p) return;
+  p.atb=(p.atb||[]).filter(function(a){return a.id!==aid;}); persist(); reCard(pid);
+}
+function atbDay(a) { if(!a.startDate) return 1; return Math.max(1,Math.floor((Date.now()-new Date(a.startDate+'T00:00:00'))/86400000)+1); }
+
+// ─── PROCEDURES ──────────────────────────────────────────────────────────────
+function addProc(pid) {
+  var inp=document.getElementById('proci-'+pid); if(!inp) return;
+  var name=inp.value.trim(); if(!name) return;
+  var res=document.getElementById('procr-'+pid);
+  var result=res?res.value.trim():'';
+  var p=patients.find(function(x){return x.id===pid;}); if(!p) return;
+  if(!p.procedures) p.procedures=[];
+  p.procedures.unshift({id:uid(), name:name, result:result, date:new Date().toISOString().slice(0,10)});
+  inp.value=''; if(res) res.value=''; persist(); reCard(pid);
+}
+function delProc(pid, prid) {
+  var p=patients.find(function(x){return x.id===pid;}); if(!p) return;
+  p.procedures=(p.procedures||[]).filter(function(x){return x.id!==prid;}); persist(); reCard(pid);
+}
+function procDay(pr) { if(!pr.date) return 0; return Math.max(0,Math.floor((Date.now()-new Date(pr.date+'T00:00:00'))/86400000)); }
+
+// ─── DEVICES ─────────────────────────────────────────────────────────────────
+function addDevice(pid, devKey) {
+  var inp=document.getElementById('devi-'+devKey+'-'+pid); if(!inp) return;
+  var name=inp.value.trim(); if(!name) return;
+  var p=patients.find(function(x){return x.id===pid;}); if(!p) return;
+  if(!p.devices) p.devices={};
+  if(!p.devices[devKey]) p.devices[devKey]=[];
+  p.devices[devKey].unshift({id:uid(), name:name, date:new Date().toISOString().slice(0,10)});
+  inp.value=''; persist(); reCard(pid);
+}
+function delDevice(pid, devKey, devId) {
+  var p=patients.find(function(x){return x.id===pid;}); if(!p) return;
+  if(!p.devices||!p.devices[devKey]) return;
+  p.devices[devKey]=p.devices[devKey].filter(function(x){return x.id!==devId;}); persist(); reCard(pid);
+}
+function deviceDay(dev) { if(!dev.date) return 1; return Math.max(1,Math.floor((Date.now()-new Date(dev.date+'T00:00:00'))/86400000)+1); }
+
+// ─── CRITICAL ────────────────────────────────────────────────────────────────
+function togCritical(pid) {
+  var p=patients.find(function(x){return x.id===pid;}); if(!p) return;
+  p.critical=!p.critical; persist(); reCard(pid); renderStats();
+}
+
+// ─── LABS ────────────────────────────────────────────────────────────────────
+function togLabs(id) {
+  var p=patients.find(function(x){return x.id===id;}); if(!p) return;
+  p.hasLabs=!p.hasLabs; persist(); reCard(id); renderStats();
+}
+
+// ─── GLOBAL PENDIENTES ────────────────────────────────────────────────────────
+function renderGlobalPend() {
+  var list=document.getElementById('globalPendList'); if(!list) return;
+  var all=[];
+  patients.forEach(function(p) {
+    (p.pendientes||[]).filter(function(x){return !x.done;}).forEach(function(x) { all.push({pend:x, patient:p}); });
+  });
+  if(!all.length){list.innerHTML='<div class="empty"><div class="empty-icon">✅</div>Sin pendientes activos.</div>';return;}
+  all.sort(function(a,b) {
+    var ap=a.pend.prioridad==='urgente'?0:1, bp=b.pend.prioridad==='urgente'?0:1;
+    if(ap!==bp) return ap-bp;
+    return (a.pend.hora||'99:99').localeCompare(b.pend.hora||'99:99');
+  });
+  list.innerHTML=all.map(function(item) {
+    var x=item.pend, p=item.patient;
+    var meta=[]; if(x.hora) meta.push('⏰ '+x.hora); if(x.notificar) meta.push('→ '+x.notificar); if(x.recurrente) meta.push('↺');
+    var priCls=x.prioridad==='urgente'?'urgente':'rutina';
+    return '<div class="gp-item '+priCls+'">'
+      +'<div class="gp-bed">'+esc(p.cama)+'</div>'
+      +'<div><div class="gp-name">'+esc(x.text)+'<span class="pend-priority '+(x.prioridad==='urgente'?'pp-urgente':'pp-rutina')+'">'+(x.prioridad==='urgente'?'URGENTE':'rutina')+'</span></div>'
+      +(meta.length?'<div class="gp-meta">'+meta.join(' · ')+'</div>':'')
+      +'<div class="gp-meta" style="margin-top:1px">'+esc(p.nombre)+'</div></div>'
+      +'<button class="btn btn-s btn-sm" onclick="togPendGlobal(\''+p.id+'\',\''+x.id+'\')">✓</button>'
+      +'</div>';
+  }).join('');
+}
+function togPendGlobal(pid, xid) {
+  var p=patients.find(function(x){return x.id===pid;}); if(!p) return;
+  var x=p.pendientes.find(function(y){return y.id===xid;}); if(x){x.done=true; persist(); renderGlobalPend();}
+}
+
+// ─── LOGBOOK ─────────────────────────────────────────────────────────────────
+function saveLogbookEntry() {
+  var today=new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  var isoDate=new Date().toISOString().slice(0,10);
+  // Count procedures across all patients today
+  var totalProcs=0, totalAtb=0, totalPatientsActive=patients.length;
+  var dxList=[];
+  patients.forEach(function(p) {
+    totalAtb += (p.atb||[]).length;
+    totalProcs += (p.procedures||[]).filter(function(pr){return pr.date===isoDate;}).length;
+    if(p.dx) dxList.push(p.cama+': '+p.dx);
+  });
+  var miss=patients.filter(function(p){return p&&p.id;}).reduce(function(a,p){return a+missScales(p).length;},0);
+  var entry={
+    id:uid(), date:today, isoDate:isoDate,
+    patients:totalPatientsActive, atbActive:totalAtb,
+    procsToday:totalProcs, scalesPending:miss,
+    dxSummary:dxList.slice(0,10).join(' | '),
+    notes:'',
+  };
+  logbook.unshift(entry);
+  if(logbook.length > 50) logbook = logbook.slice(0,50); // keep last 50
+  persist(); renderLogbook();
+}
+
+function delLogbookEntry(id) {
+  showConfirm('¿Eliminar esta entrada del logbook?', function() {
+    logbook=logbook.filter(function(e){return e.id!==id;}); persist(); renderLogbook();
+  });
+}
+
+function saveLogbookNote(id) {
+  var el=document.getElementById('lb-note-'+id); if(!el) return;
+  var entry=logbook.find(function(e){return e.id===id;}); if(!entry) return;
+  entry.notes=el.value; persist();
+}
+
+function renderLogbook() {
+  var list=document.getElementById('logbookList'); if(!list) return;
+  if(!logbook.length){
+    list.innerHTML='<div class="empty"><div class="empty-icon">📋</div>Sin entradas. Guarda tu primer turno.</div>';
+    return;
+  }
+  list.innerHTML=logbook.map(function(e) {
+    return '<div class="logbook-entry">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+      +'<div class="logbook-date">'+esc(e.date)+'</div>'
+      +'<button class="btn btn-d btn-sm" onclick="delLogbookEntry(\''+e.id+'\')">Eliminar</button>'
+      +'</div>'
+      +'<div class="logbook-stats">'
+      +'<span class="logbook-stat">'+e.patients+' pacientes</span>'
+      +'<span class="logbook-stat">'+e.atbActive+' ATB activos</span>'
+      +(e.procsToday?'<span class="logbook-stat">'+e.procsToday+' procedimientos</span>':'')
+      +(e.scalesPending?'<span class="logbook-stat" style="color:var(--pink)">'+e.scalesPending+' escalas pend.</span>':'')
+      +'</div>'
+      +(e.dxSummary?'<div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:7px">'+esc(e.dxSummary)+'</div>':'')
+      +'<textarea id="lb-note-'+e.id+'" class="dta" style="min-height:45px" placeholder="Notas del turno..." onblur="saveLogbookNote(\''+e.id+'\')">'+esc(e.notes||'')+'</textarea>'
+      +'</div>';
+  }).join('');
+}
+
+// ─── ENTREGA DE GUARDIA ───────────────────────────────────────────────────────
+function renderEntrega() {}
+function genEntrega() {
+  if(!patients.length){document.getElementById('entregaOut').textContent='No hay pacientes.';return;}
+  var sorted=patients.slice().sort(function(a,b){
+    if(a.critical&&!b.critical) return -1; if(!a.critical&&b.critical) return 1;
+    return (parseInt(a.cama.replace(/\D/g,''))||0)-(parseInt(b.cama.replace(/\D/g,''))||0);
+  });
+  var byDoc={};
+  sorted.filter(function(p){return p.hasLabs&&p.tratantes&&p.tratantes.length;}).forEach(function(p){
+    p.tratantes.forEach(function(t){if(!byDoc[t])byDoc[t]=[];byDoc[t].push(p.cama);});
+  });
+  var lines=[];
+  lines.push('ENTREGA DE GUARDIA — '+new Date().toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long'}));
+  lines.push('═══════════════════════════════════════════');
+  lines.push('');
+  sorted.forEach(function(p) {
+    var dias=diasEst(p.ingreso);
+    var risk=calcRisk(p);
+    var hdr=(p.critical?'🔴 ':'')+'['+risk.level.toUpperCase()+'] '+p.cama+' — '+p.nombre+(dias!==null?' (Día '+dias+')':'');
+    lines.push(hdr);
+    lines.push('─────────────────────────────────');
+    var ct=buildCensusText(p); if(ct) lines.push('Dx: '+ct);
+    var atbs=p.atb||[];
+    if(atbs.length) lines.push('ATB: '+atbs.map(function(a){return a.scheme+' (día '+atbDay(a)+')';}).join(' | '));
+    // Device summary
+    var devSum=[];
+    if(p.devices){
+      DEV_TYPES.forEach(function(dt){
+        var devs=(p.devices[dt.key]||[]);
+        if(devs.length){
+          var alerts=getDeviceAlerts(p).filter(function(a){return a.indexOf(dt.label)>-1;});
+          devs.forEach(function(d){devSum.push(d.name+' (día '+deviceDay(d)+')'+(alerts.length?' ⚠':''));});
+        }
+      });
+    }
+    if(devSum.length) lines.push('Dispositivos: '+devSum.join(' | '));
+    var recentProcs=(p.procedures||[]).slice(0,3);
+    if(recentProcs.length) lines.push('Procedimientos: '+recentProcs.map(function(pr){return pr.name+(pr.result?' → '+pr.result:'');}).join(' | '));
+    if(p.hasLabs) lines.push('Labs indicados → '+(p.tratantes.join(', ')||'—'));
+    var pends=(p.pendientes||[]).filter(function(x){return !x.done;});
+    if(pends.length) lines.push('Pendientes: '+pends.map(function(x){return (x.prioridad==='urgente'?'⚠ ':'')+x.text+(x.hora?' ('+x.hora+')':'');}).join(' · '));
+    // Última nota de evolución o ingreso
+    var sortedNotes=(p.notes||[]).slice().sort(function(a,b){return (a.isoDate||'').localeCompare(b.isoDate||'');});
+    var lastNote=sortedNotes.length?sortedNotes[sortedNotes.length-1]:null;
+    if(lastNote){
+      var noteSecs=lastNote.type==='ingreso'?ING_SECS:EVO_SECS;
+      lines.push('Nota ('+(lastNote.type==='ingreso'?'INGRESO':'EVO')+' — '+lastNote.date+'):');
+      noteSecs.forEach(function(sec){
+        if(lastNote.data&&lastNote.data[sec.id]&&lastNote.data[sec.id].trim()){
+          var txt=lastNote.data[sec.id].trim();
+          lines.push('  [• '+sec.label+'] '+(txt.length>250?txt.slice(0,250)+'…':txt));
+        }
+      });
+    }
+    // Última nota de evolución o ingreso
+    var sortedNotes=(p.notes||[]).slice().sort(function(a,b){return (a.isoDate||'').localeCompare(b.isoDate||'');});
+    var lastNote=sortedNotes.length?sortedNotes[sortedNotes.length-1]:null;
+    if(lastNote){
+      var noteSecs=lastNote.type==='ingreso'?ING_SECS:EVO_SECS;
+      lines.push('Nota ('+(lastNote.type==='ingreso'?'INGRESO':'EVO')+' — '+lastNote.date+'):');
+      noteSecs.forEach(function(sec){
+        if(lastNote.data&&lastNote.data[sec.id]&&lastNote.data[sec.id].trim()){
+          var txt=lastNote.data[sec.id].trim();
+          lines.push('  [• '+sec.label+'] '+(txt.length>250?txt.slice(0,250)+'…':txt));
+        }
+      });
+    }
+    var devAlertsList=getDeviceAlerts(p);
+    if(devAlertsList.length) lines.push('⚠ Alertas dispositivo: '+devAlertsList.join(', '));
+    lines.push('');
+  });
+  if(Object.keys(byDoc).length){
+    lines.push('LABS 5AM — POR TRATANTE');
+    lines.push('─────────────────────────────────');
+    Object.keys(byDoc).sort().forEach(function(doc){lines.push(doc+': '+byDoc[doc].join(', '));});
+    lines.push('');
+  }
+  document.getElementById('entregaOut').textContent=lines.join('\n');
+}
+
+// ─── BUILD SECTIONS ──────────────────────────────────────────────────────────
+function buildAtbSection(p) {
+  var pid=p.id, atbs=p.atb||[];
+  var h='';
+  if(!atbs.length){ h='<div style="color:var(--muted);font-size:11px;font-family:var(--mono)">Sin ATB registrados</div>'; }
+  else {
+    atbs.forEach(function(a){
+      h+='<div class="atb-row"><div class="atb-info"><div class="atb-scheme">'+esc(a.scheme)+'</div>'
+        +'<div class="atb-day">Día '+atbDay(a)+' · inicio '+esc(a.startDate||'?')+'</div></div>'
+        +'<button class="pdel" onclick="delAtb(\''+pid+'\',\''+a.id+'\')">&#215;</button></div>';
+    });
+  }
+  h+='<div class="add-row"><input id="atbi-'+pid+'" placeholder="Meropenem 1g IV c/8h" style="flex:1" onkeydown="if(event.key===\'Enter\'){addAtb(\''+pid+'\');event.preventDefault();}"></input>'
+    +'<button class="btn btn-s btn-sm" onclick="addAtb(\''+pid+'\')">+ ATB</button></div>';
+  return h;
+}
+
+function buildProcSection(p) {
+  var pid=p.id, procs=p.procedures||[];
+  var h='';
+  if(!procs.length){ h='<div style="color:var(--muted);font-size:11px;font-family:var(--mono)">Sin procedimientos</div>'; }
+  else {
+    procs.forEach(function(pr){
+      h+='<div class="proc-row"><div class="proc-info"><div class="proc-name">'+esc(pr.name)+'</div>'
+        +(pr.result?'<div class="proc-result">'+esc(pr.result)+'</div>':'')
+        +'<div class="proc-day">Hace '+procDay(pr)+'d · '+esc(pr.date)+'</div></div>'
+        +'<button class="pdel" onclick="delProc(\''+pid+'\',\''+pr.id+'\')">&#215;</button></div>';
+    });
+  }
+  h+='<div style="border-top:1px solid var(--border);padding-top:7px;margin-top:5px">'
+    +'<div class="add-row"><input id="proci-'+pid+'" placeholder="Paracentesis, toracocentesis..." style="flex:1" onkeydown="if(event.key===\'Enter\'){addProc(\''+pid+'\');event.preventDefault();}"></div>'
+    +'<textarea id="procr-'+pid+'" class="dta" style="min-height:38px;margin-top:5px;font-size:11px" placeholder="Resultado / hallazgo (opcional)"></textarea>'
+    +'<button class="btn btn-s btn-sm" style="margin-top:5px" onclick="addProc(\''+pid+'\')">+ Procedimiento</button>'
+    +'</div>';
+  return h;
+}
+
+function buildDevicesSection(p) {
+  var pid=p.id;
+  var devAlertsList=getDeviceAlerts(p);
+  var h='';
+  if(devAlertsList.length){
+    h+='<div style="background:rgba(255,59,92,.08);border:1px solid rgba(255,59,92,.25);border-radius:7px;padding:7px 9px;margin-bottom:8px;font-family:var(--mono);font-size:10px;color:var(--danger)">'
+      +'⚠ '+devAlertsList.join(' · ')+'</div>';
+  }
+  DEV_TYPES.forEach(function(dt){
+    var devs=(p.devices&&p.devices[dt.key])||[];
+    h+='<div class="dev-group"><div class="dev-group-title"><span>'+dt.icon+'</span>'+dt.label+'</div>';
+    devs.forEach(function(d){
+      var days=deviceDay(d);
+      var limit=DEVICE_LIMITS[dt.key];
+      var over=limit&&days>limit.days;
+      h+='<div class="dev-row"><div class="dev-info" style="font-family:var(--mono);font-size:11px">'+esc(d.name)
+        +'<div class="dev-day" style="'+(over?'color:var(--danger)':'')+'">Día '+days+(over?' ⚠ Revisar':'')+'</div></div>'
+        +'<button class="pdel" onclick="delDevice(\''+pid+'\',\''+dt.key+'\',\''+d.id+'\')">&#215;</button></div>';
+    });
+    h+='<div class="add-row"><input id="devi-'+dt.key+'-'+pid+'" placeholder="'+dt.placeholder+'" style="font-size:11px" onkeydown="if(event.key===\'Enter\'){addDevice(\''+pid+'\',\''+dt.key+'\');event.preventDefault();}"></div>';
+    h+='</div>';
+  });
+  return h;
+}
+
+// ─── BUILD NOTE FORM ──────────────────────────────────────────────────────────
+function buildNoteForm(pid, type, hasIng, today, dia) {
+  var secs=type==='ingreso'?ING_SECS:EVO_SECS;
+  var label=type==='ingreso'?'Nota de Ingreso':'Nota de Evolución';
+  var color=type==='ingreso'?'var(--purple)':'var(--accent)';
+  var h='<div class="new-note-form">';
+  h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:5px">';
+  h+='<div style="font-size:11px;font-weight:700;color:'+color+'">'+label+' — '+today+' (Día '+dia+')</div>';
+  h+='<div style="display:flex;gap:5px;flex-wrap:wrap">';
+  if(!hasIng&&type==='evolucion') h+='<button class="btn btn-g btn-sm" onclick="switchNoteType(\''+pid+'\',\'ingreso\')">→ Ingreso</button>';
+  if(type==='ingreso')            h+='<button class="btn btn-g btn-sm" onclick="switchNoteType(\''+pid+'\',\'evolucion\')">→ Evolución</button>';
+  h+='<button class="btn btn-s btn-sm" onclick="addNote(\''+pid+'\',\''+type+'\')">💾 Guardar</button>';
+  h+='</div></div>';
+  secs.forEach(function(s){
+    h+='<div class="note-sec"><div class="note-lbl">'+s.label+'</div>';
+    h+='<textarea class="note-ta '+(s.tall?'tall':'')+'" id="nn-'+s.id+'-'+pid+'" placeholder="—"></textarea></div>';
+  });
+  h+='</div>';
+  return h;
+}
+
+function switchNoteType(pid, type) {
+  var p=patients.find(function(x){return x.id===pid;}); if(!p) return;
+  var container=document.getElementById('nnt-'+pid); if(!container) return;
+  var hasIng=(p.notes||[]).some(function(n){return n.type==='ingreso';});
+  var today=new Date().toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+  var dia=p.ingreso?diasEst(p.ingreso):'?';
+  container.innerHTML=buildNoteForm(pid,type,hasIng,today,dia);
+}
+
+// ─── BUILD NOTE PANEL ─────────────────────────────────────────────────────────
+function buildNotePanel(p, activeTab) {
+  if(!p.notes) p.notes=[];
+  var pid=p.id;
+  var today=new Date().toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+  var dia=p.ingreso?diasEst(p.ingreso):'?';
+  var hasIng=p.notes.some(function(n){return n.type==='ingreso';});
+  var defType=hasIng?'evolucion':'ingreso';
+  var h='<div class="dpanel '+(activeTab==='notas'?'active':'')+'" id="dp-notas-'+pid+'">';
+  h+='<div id="nnt-'+pid+'">'+buildNoteForm(pid,defType,hasIng,today,dia)+'</div>';
+  h+='<div class="stitle" style="margin-top:4px">Notas previas ('+p.notes.length+')</div>';
+  if(!p.notes.length){
+    h+='<div style="color:var(--muted);font-size:11px;font-family:var(--mono);padding:6px 0">Sin notas aún.</div>';
+  } else {
+    p.notes.slice().reverse().forEach(function(n){
+      var secs=n.type==='ingreso'?ING_SECS:EVO_SECS;
+      var preview=''; var vals=Object.values(n.data||{}); for(var i=0;i<vals.length;i++){if(vals[i]){preview=vals[i];break;}}
+      h+='<div class="note-entry">';
+      h+='<div class="note-hdr" onclick="togNoteBody(\''+n.id+'\')">';
+      h+='<div style="display:flex;align-items:center;gap:7px"><span class="note-date">'+esc(n.date)+'</span>';
+      h+='<span class="note-typ '+(n.type==='ingreso'?'nt-i':'nt-e')+'">'+(n.type==='ingreso'?'INGRESO':'EVOLUCIÓN')+'</span>';
+      if(preview) h+='<span style="color:var(--muted);font-family:var(--mono);font-size:10px;max-width:150px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">'+esc(preview.slice(0,50))+'…</span>';
+      h+='</div>';
+      h+='<div style="display:flex;gap:5px;align-items:center"><button class="btn btn-d btn-sm" onclick="event.stopPropagation();delNote(\''+pid+'\',\''+n.id+'\')">Eliminar</button><span style="color:var(--muted);font-size:13px">▾</span></div></div>';
+      h+='<div class="note-body" id="nb-'+n.id+'">';
+      secs.forEach(function(s){if(n.data&&n.data[s.id]){h+='<div class="note-sec"><div class="note-lbl">'+s.label+'</div><div style="font-family:var(--mono);font-size:11px;line-height:1.7;white-space:pre-wrap">'+esc(n.data[s.id])+'</div></div>';}});
+      h+='</div></div>';
+    });
+  }
+  // Export section
+  h+='<div class="cblock" style="margin-top:4px">';
+  h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">';
+  h+='<div class="dstitle" style="margin-bottom:0"><span class="dot d-pk"></span>Exportar notas</div>';
+  h+='<button class="btn btn-g btn-sm" onclick="copyText(\'notes-exp-'+pid+'\')">📋 Copiar</button></div>';
+  h+='<div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:6px">Copia el historial para resumir en Claude u otro lado</div>';
+  h+='<div class="cout" id="notes-exp-'+pid+'" style="max-height:150px;overflow-y:auto;font-size:10px">'+buildNotesExport(p)+'</div>';
+  h+='</div>';
+  h+='</div>';
+  return h;
+}
+
+// ─── RE-RENDER CARD ───────────────────────────────────────────────────────────
+function reCard(id) {
+  var el=document.getElementById('card-'+id); if(!el){renderAll();return;}
+  var isOpen=(document.getElementById('det-'+id)||{}).classList&&document.getElementById('det-'+id).classList.contains('open');
+  var atEl=document.querySelector('#dtabs-'+id+' .dtab.active');
+  var atab=atEl?atEl.dataset.tab||'basico':'basico';
+  var p=patients.find(function(x){return x.id===id;}); if(!p) return;
+  el.outerHTML=buildCard(p,isOpen,atab);
+  renderStats();
+}
+
+// ─── BUILD CARD ───────────────────────────────────────────────────────────────
+function buildCard(p, forceOpen, activeTab) {
+  forceOpen=forceOpen||false; activeTab=activeTab||'basico';
+  var dias=diasEst(p.ingreso), pc=pcnt(p), miss=missScales(p);
+  var noteCount=(p.notes||[]).length;
+  var risk=calcRisk(p);
+  var devAlertsList=getDeviceAlerts(p);
+
+  var cls='pcard risk-'+risk.level;
+
+  // Header badges
+  var badges=(p.critical?'<span class="badge b-no">🔴 CRÍTICO</span>':'');
+  badges+='<span class="risk-pill '+risk.level+'">'+risk.level.toUpperCase()+'</span>';
+  badges+=p.hasLabs?'<span class="badge b-ok">LABS ✓</span>':'<span class="badge b-no">SIN LABS</span>';
+  if(pc>0)         badges+='<span class="badge b-p">'+pc+' PEND</span>';
+  if(dias!==null)  badges+='<span class="badge b-y">DÍA '+dias+'</span>';
+  if(miss.length)  badges+='<span class="badge b-pk">⚠ '+miss.map(function(s){return s.name;}).join(', ')+'</span>';
+  var dAlerts=devAlerts(p);
+  dAlerts.forEach(function(a){ badges+='<span class="badge b-no">⚠ '+esc(a.type)+' día '+a.days+'</span>'; });
+  if(risk.level==='critico'||risk.level==='rojo') badges+='<span class="badge b-no" style="max-width:200px;overflow:hidden;text-overflow:ellipsis">'+esc(risk.alerts.slice(0,2).join(' · '))+'</span>';
+  if(devAlertsList.length) badges+='<span class="badge b-w">⚠ DISPOSITIVO</span>';
+  IMAGING.forEach(function(t){
+    var st=(p.imaging||{})[t.key];
+    if(st==='pedido')    badges+='<span class="badge b-w">'+t.label+': PED</span>';
+    if(st==='resultado') badges+='<span class="badge b-ok">'+t.label+': ✓</span>';
+  });
+
+  // Imaging rows
+  var imgRows='';
+  IMAGING.forEach(function(t){
+    var st=(p.imaging||{})[t.key]||'none';
+    var icon=st==='none'?'○':st==='pedido'?'◑':'●';
+    var lbl=st==='none'?'Sin pedir':st==='pedido'?'Pedido →':'Resultado ✓';
+    var col=st==='none'?'var(--muted)':st==='pedido'?'var(--warn)':'var(--accent2)';
+    imgRows+='<div style="display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="cycleImg(\''+p.id+'\',\''+t.key+'\')">'
+      +'<span style="font-size:14px">'+icon+'</span>'
+      +'<span style="font-size:11px;flex:1;'+(st==='resultado'?'color:var(--muted);text-decoration:line-through':'')+'">'+t.label+'</span>'
+      +'<span style="font-family:var(--mono);font-size:9px;color:'+col+'">'+lbl+'</span></div>';
+  });
+
+  // Pendientes rows
+  var pendRows='';
+  var pendsArr=p.pendientes||[];
+  if(!pendsArr.length){ pendRows='<div style="color:var(--muted);font-size:11px;font-family:var(--mono)">Sin pendientes</div>'; }
+  else {
+    pendsArr.forEach(function(x){
+      var meta=[];
+      if(x.hora) meta.push('⏰ '+x.hora);
+      if(x.notificar) meta.push('→ '+x.notificar);
+      if(x.recurrente) meta.push('↺');
+      pendRows+='<div class="pend-item">'
+        +'<input type="checkbox" '+(x.done?'checked':'')+' onchange="togPend(\''+p.id+'\',\''+x.id+'\')">'
+        +'<div style="flex:1"><span class="pend-text '+(x.done?'done':'')+'">'+esc(x.text)
+        +(x.prioridad?'<span class="pend-priority '+(x.prioridad==='urgente'?'pp-urgente':'pp-rutina')+'">'+(x.prioridad==='urgente'?'URGENTE':'rutina')+'</span>':'')
+        +'</span>'+(meta.length?'<div class="pend-meta">'+meta.join(' · ')+'</div>':'')+'</div>'
+        +'<button class="pdel" onclick="delPend(\''+p.id+'\',\''+x.id+'\')">&#215;</button></div>';
+    });
+  }
+
+  // Dx rows
+  var dxRows='';
+  if(!(p.diagnoses||[]).length){ dxRows='<div style="color:var(--muted);font-size:11px;font-family:var(--mono);padding:5px 0">Sin diagnósticos. Pega el censo o agrega uno.</div>'; }
+  else {
+    (p.diagnoses||[]).forEach(function(d){
+      var cd=currentDays(d);
+      dxRows+='<div class="dx-row"><div class="dx-text">'+esc(d.text)
+        +(cd.length?'<span class="dx-days"> '+fmtDays(cd)+'</span>':'<span style="color:var(--muted);font-family:var(--mono);font-size:10px"> (nuevo hoy)</span>')
+        +'</div><button class="pdel" onclick="remDx(\''+p.id+'\',\''+d.id+'\')">&#215;</button></div>';
+    });
+  }
+
+  // Census output
+  var censusText=buildCensusText(p);
+
+  // Scales
+  var applicable=detScales(p);
+  var scalesHtml='';
+  if(!applicable.length){ scalesHtml='<div style="color:var(--muted);font-size:11px;font-family:var(--mono)">Agrega diagnósticos en Censo para detectar escalas.</div>'; }
+  else {
+    applicable.forEach(function(s){
+      var score=(p.scales||{})[s.id]&&(p.scales||{})[s.id].score?(p.scales||{})[s.id].score:'';
+      var col=score?'var(--accent2)':'var(--pink)';
+      var hasCalc=!!CALCULATORS[s.id];
+      var triggerDxs=(p.diagnoses||[]).filter(function(d){return s.trg.some(function(t){return d.text.toLowerCase().indexOf(t)>-1;});}).map(function(d){return d.text;});
+      scalesHtml+='<div class="scale-blk">'
+        +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">'
+        +'<div><div class="scale-name">'+s.name+'</div></div>'
+        +'<div style="display:flex;align-items:center;gap:6px">'
+        +(hasCalc?'<button class="btn btn-g btn-sm" onclick="openCalc(\''+s.id+'\',\''+p.id+'\')">🧮 Calcular</button>':'')
+        +'<span style="color:'+col+';font-family:var(--mono);font-size:10px">'+(score?'Score: '+score:'⚠ Falta')+'</span>'
+        +'</div></div>'
+        +(triggerDxs.length?'<div class="scale-from">Detectado en: '+esc(triggerDxs.join(' · '))+'</div>':'')
+        +'<div style="display:flex;gap:5px;align-items:center;margin-top:6px">'
+        +'<input id="sc-'+s.id+'-'+p.id+'" type="text" placeholder="Score" value="'+esc(score)+'" style="flex:1;padding:5px 8px;font-size:11px">'
+        +'<button class="btn btn-s btn-sm" onclick="saveScale(\''+p.id+'\',\''+s.id+'\')">Guardar</button></div></div>';
+    });
+  }
+
+  // Detail tabs
+  var dtabs=[
+    {id:'basico',  label:'General'},
+    {id:'censo',   label:'Censo'},
+    {id:'escalas', label:'Escalas '+(miss.length?'⚠'+miss.length:'✓')},
+    {id:'notas',   label:'Notas'+(noteCount?' ('+noteCount+')':'')},
+  ];
+
+  var h='<div class="'+cls+'" id="card-'+p.id+'">';
+  var risk=calcRisk(p);
+  h+='<div class="phdr" onclick="togExpand(\''+p.id+'\')">';;
+  h+='<div><div style="display:flex;align-items:center;gap:5px;margin-bottom:3px"><span class="'+semCls(risk.level)+'"></span></div><div class="pbed">'+esc(p.cama)+'<small>CAMA</small></div></div>';
+  h+='<div><div class="pname">'+esc(p.nombre)+'</div>';
+  if(p.dx) h+='<div class="pmeta" style="margin-bottom:2px">'+esc(p.dx)+'</div>';
+  h+='<div class="pmeta">'+(p.tratantes&&p.tratantes.length?p.tratantes.map(esc).join(' · '):'<span style="color:var(--danger)">Sin tratante</span>')+'</div>';
+  h+='<div class="pbadges">'+badges+'</div></div>';
+  h+='<div class="arrow '+(forceOpen?'open':'')+'" id="arr-'+p.id+'">▾</div></div>';
+
+  h+='<div class="pdet '+(forceOpen?'open':'')+'" id="det-'+p.id+'">';
+  h+='<div class="dtabs" id="dtabs-'+p.id+'">';
+  dtabs.forEach(function(t){ h+='<button class="dtab '+(activeTab===t.id?'active':'')+'" data-tab="'+t.id+'" onclick="swDTab(\''+p.id+'\',\''+t.id+'\')">'+t.label+'</button>'; });
+  h+='</div>';
+
+  // GENERAL panel
+  h+='<div class="dpanel '+(activeTab==='basico'?'active':'')+'" id="dp-basico-'+p.id+'">';
+  if(risk.level!=='bajo'){
+    h+='<div class="alert '+(risk.level==='alto'?'al-d':'al-w')+'" style="margin-bottom:10px">';
+    h+=(risk.level==='critico'?'🔴':risk.level==='rojo'?'🟠':'🟡')+' Riesgo '+risk.level+': '+risk.alerts.join(' · ')+'</div>';
+  }
+  h+='<div class="dgrid">';
+  h+='<div class="dsec"><div class="dstitle"><span class="dot d-a"></span>Imagen</div>'+imgRows+'</div>';
+  h+='<div class="dsec"><div class="dstitle"><span class="dot d-ok"></span>Pendientes</div>'+pendRows;
+  h+='<div style="border-top:1px solid var(--border);padding-top:7px;margin-top:5px">';
+  h+='<div class="add-row" style="flex-wrap:wrap;margin-bottom:5px">';
+  h+='<input id="pi-'+p.id+'" placeholder="Nuevo pendiente…" style="flex:2;min-width:120px" onkeydown="if(event.key===\'Enter\'){addPend(\''+p.id+'\');event.preventDefault();}"></input>';
+  h+='<input id="ph-'+p.id+'" type="time" style="width:80px;padding:5px 7px;font-size:11px" title="Hora límite"></input>';
+  h+='<select id="pp-'+p.id+'" style="width:80px;padding:5px 7px;font-size:11px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px"><option value="rutina">Rutina</option><option value="urgente">Urgente</option></select>';
+  h+='<button class="btn btn-s btn-sm" onclick="addPend(\''+p.id+'\')">&nbsp;+&nbsp;</button></div>';
+  h+='<div class="add-row"><input id="pn-'+p.id+'" placeholder="Notificar a…" style="flex:1;font-size:11px">'
+    +'<select style="width:130px;padding:5px 7px;font-size:10px;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px" id="pn-'+p.id+'">'
+    +'<option value="">Notificar a…</option>'
+    +(p.tratantes||[]).map(function(t){return '<option value="'+esc(t)+'">'+esc(t)+'</option>';}).join('')
+    +'</select>'
+    +'<label style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--muted);white-space:nowrap;cursor:pointer"><input id="pr-'+p.id+'" type="checkbox" style="width:12px;height:12px"> ↺</label>'
+    +'</div></div></div>';
+  h+='<div class="dsec"><div class="dstitle"><span class="dot d-y"></span>Cultivos</div>';
+  h+='<textarea class="dta" id="note-cultivos-'+p.id+'" placeholder="Hemocultivos, urocultivo, resultados…" onblur="saveNote(\''+p.id+'\',\'cultivos\')">'+esc(p.cultivos||'')+'</textarea></div>';
+  h+='<div class="dsec"><div class="dstitle"><span class="dot d-p"></span>Interconsultas</div>';
+  h+='<textarea class="dta" id="note-interconsultas-'+p.id+'" placeholder="Especialidad, fecha, respuesta…" onblur="saveNote(\''+p.id+'\',\'interconsultas\')">'+esc(p.interconsultas||'')+'</textarea></div>';
+  h+='<div class="dsec" style="grid-column:1/-1"><div class="dstitle"><span class="dot d-w"></span>Procedimientos realizados</div>'+buildProcSection(p)+'</div>';
+  h+='<div class="dsec" style="grid-column:1/-1"><div class="dstitle"><span class="dot d-y"></span>Dispositivos activos</div>'+buildDevicesSection(p)+'</div>';
+  h+='<div class="dsec" style="grid-column:1/-1"><div class="dstitle"><span class="dot d-ok"></span>Antibióticos activos</div>'+buildAtbSection(p)+'</div>';
+  h+='</div>';
+  h+='<div class="abar">';
+  h+='<button class="btn btn-g btn-sm" onclick="editPatient(\''+p.id+'\')">✏️ Editar</button>';
+  h+='<button class="btn '+(p.hasLabs?'btn-w':'btn-s')+' btn-sm" onclick="togLabs(\''+p.id+'\')">'+(p.hasLabs?'Quitar labs':'+ Labs')+'</button>';
+  h+='<button class="critical-toggle '+(p.critical?'active':'')+'" onclick="togCritical(\''+p.id+'\')">'+(p.critical?'🔴 Crítico':'⚪ Crítico')+'</button>';
+  h+='<button class="btn btn-d btn-sm" onclick="deletePatient(\''+p.id+'\')">Alta</button>';
+  h+='</div></div>';
+
+  // CENSO panel
+  h+='<div class="dpanel '+(activeTab==='censo'?'active':'')+'" id="dp-censo-'+p.id+'">';
+  h+='<div class="cblock"><div class="dstitle"><span class="dot d-pk"></span>Pegar censo (reemplaza todo)</div>';
+  h+='<textarea class="cpaste" id="cpaste-'+p.id+'" placeholder="Choque séptico SOFA 6pts(29d,58d)+TVP(5d)/NAC PSI IV(12d) [25,0]" oninput="prevCensus(\'cpaste-'+p.id+'\',\'cprev-'+p.id+'\')"></textarea>';
+  h+='<div id="cprev-'+p.id+'"></div>';
+  h+='<div style="display:flex;justify-content:flex-end;margin-top:7px"><button class="btn btn-p btn-sm" onclick="applyPasteCensus(\''+p.id+'\')">Aplicar censo</button></div></div>';
+  h+='<div class="cblock"><div class="dstitle"><span class="dot d-a"></span>Diagnósticos activos</div>';
+  h+=dxRows;
+  h+='<div style="border-top:1px solid var(--border);padding-top:8px;margin-top:6px">';
+  h+='<div style="font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Agregar diagnóstico</div>';
+  h+='<div class="add-row" style="flex-wrap:wrap">';
+  h+='<input id="dxi-'+p.id+'" placeholder="TVP femoral izquierda" style="flex:2;min-width:130px" onkeydown="if(event.key===\'Enter\'){addDx(\''+p.id+'\');event.preventDefault();}"></input>';
+  h+='<input id="dxd-'+p.id+'" type="number" placeholder="Día base" style="flex:0 0 90px;padding:5px 8px;font-size:11px" title="Días previos al ingreso"></input>';
+  h+='<button class="btn btn-s btn-sm" onclick="addDx(\''+p.id+'\')">+ Dx</button></div>';
+  h+='<div style="font-size:9px;color:var(--muted);font-family:var(--mono);margin-top:4px">💡 Día base vacío = inicia hoy en 0</div></div></div>';
+  h+='<div class="cblock"><div class="dstitle"><span class="dot d-ok"></span>Antecedentes / notas</div>';
+  h+='<textarea class="dta" id="cnote-'+p.id+'" placeholder="Historia relevante, comorbilidades…" onblur="saveCNote(\''+p.id+'\')" style="min-height:60px">'+esc(p.censusNote||'')+'</textarea></div>';
+  h+='<div class="cblock">';
+  h+='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:7px">';
+  h+='<div class="dstitle" style="margin-bottom:0"><span class="dot d-p"></span>Formato Sheets</div>';
+  h+='<button class="btn btn-g btn-sm" onclick="copyText(\'cout-'+p.id+'\')">📋 Copiar</button></div>';
+  h+='<div class="cout" id="cout-'+p.id+'">'+esc(censusText||'(agrega diagnósticos arriba)')+'</div></div>';
+  h+='</div>';
+
+  // ESCALAS panel
+  h+='<div class="dpanel '+(activeTab==='escalas'?'active':'')+'" id="dp-escalas-'+p.id+'">';
+  if(miss.length) h+='<div class="alert al-pk" style="margin-bottom:10px">⚠ Faltan: '+miss.map(function(s){return s.name;}).join(', ')+'</div>';
+  else if(applicable.length) h+='<div class="alert al-i" style="margin-bottom:10px">✓ Todas las escalas registradas</div>';
+  h+=scalesHtml+'</div>';
+
+  // NOTAS panel
+  h+=buildNotePanel(p,activeTab);
+
+  h+='</div></div>';
+  return h;
+}
+
+function togExpand(id){
+  document.getElementById('det-'+id)&&document.getElementById('det-'+id).classList.toggle('open');
+  document.getElementById('arr-'+id)&&document.getElementById('arr-'+id).classList.toggle('open');
+}
+function swDTab(pid,tab){
+  document.querySelectorAll('#dtabs-'+pid+' .dtab').forEach(function(t){t.classList.toggle('active',t.dataset.tab===tab);});
+  document.querySelectorAll('#det-'+pid+' .dpanel').forEach(function(p){p.classList.toggle('active',p.id==='dp-'+tab+'-'+pid);});
+}
+
+// ─── RENDER ALL ───────────────────────────────────────────────────────────────
+function renderAll() { renderStats(); renderPatients(); }
+
+function renderStats() {
+  var total=patients.length, con=patients.filter(function(p){return p.hasLabs;}).length;
+  var sin=total-con;
+  var alto=patients.filter(function(p){return calcRisk(p).level==='critico'||calcRisk(p).level==='rojo';}).length;
+  document.getElementById('statsBar').innerHTML=
+    '<div class="stat"><div class="stat-v" style="color:var(--accent)">'+total+'</div><div class="stat-l">Pacientes</div></div>'
+    +'<div class="stat"><div class="stat-v" style="color:var(--accent2)">'+con+'</div><div class="stat-l">Con labs</div></div>'
+    +'<div class="stat"><div class="stat-v" style="color:var(--warn)">'+sin+'</div><div class="stat-l">Sin labs</div></div>'
+    +'<div class="stat"><div class="stat-v" style="color:var(--danger)">'+alto+'</div><div class="stat-l">Riesgo alto</div></div>';
+}
+
+function renderPatients() {
+  var list=document.getElementById('patientList');
+  if(!patients.length){list.innerHTML='<div class="empty"><div class="empty-icon">🏥</div>No hay pacientes. Agrega el primero arriba.</div>';return;}
+  var sorted=patients.slice().sort(function(a,b){
+    // Critical first, then risk level, then bed number
+    if(a.critical&&!b.critical) return -1; if(!a.critical&&b.critical) return 1;
+    var rl={'critico':0,'rojo':1,'amarillo':2,'verde':3};
+    var ra=rl[calcRisk(a).level]||3, rb=rl[calcRisk(b).level]||3;
+    if(ra!==rb) return ra-rb;
+    return (parseInt(a.cama.replace(/\D/g,''))||0)-(parseInt(b.cama.replace(/\D/g,''))||0);
+  });
+  list.innerHTML=sorted.map(function(p){return buildCard(p,false,'basico');}).join('');
+}
+
+// Smart re-render preserving open cards
+function smartRender() {
+  var openCards={};
+  patients.forEach(function(p){
+    var det=document.getElementById('det-'+p.id);
+    var atEl=document.querySelector('#dtabs-'+p.id+' .dtab.active');
+    openCards[p.id]={open:det&&det.classList.contains('open'), tab:atEl?atEl.dataset.tab||'basico':'basico'};
+  });
+  renderStats();
+  var list=document.getElementById('patientList'); if(!list) return;
+  if(!patients.length){list.innerHTML='<div class="empty"><div class="empty-icon">🏥</div>No hay pacientes. Agrega el primero arriba.</div>';return;}
+  var sorted=patients.slice().sort(function(a,b){
+    if(a.critical&&!b.critical) return -1; if(!a.critical&&b.critical) return 1;
+    var rl={'critico':0,'rojo':1,'amarillo':2,'verde':3};
+    var ra=rl[calcRisk(a).level]||2, rb=rl[calcRisk(b).level]||2;
+    if(ra!==rb) return ra-rb;
+    return (parseInt(a.cama.replace(/\D/g,''))||0)-(parseInt(b.cama.replace(/\D/g,''))||0);
+  });
+  list.innerHTML=sorted.map(function(p){
+    var state=openCards[p.id]||{open:false,tab:'basico'};
+    return buildCard(p,state.open,state.tab);
+  }).join('');
+}
+
+// ─── DOCTOR GROUPS ────────────────────────────────────────────────────────────
+function renderDoctorGroups() {
+  var c=document.getElementById('doctorGroups');
+  var withLabs=patients.filter(function(p){return p.hasLabs&&p.tratantes&&p.tratantes.length;});
+  if(!withLabs.length){c.innerHTML='<div class="empty"><div class="empty-icon">🌙</div>No hay pacientes con labs indicados.</div>';return;}
+  var byDoc={};
+  withLabs.forEach(function(p){p.tratantes.forEach(function(t){if(!byDoc[t])byDoc[t]=[];byDoc[t].push(p);});});
+  c.innerHTML=Object.keys(byDoc).sort().map(function(doc){
+    var pts=byDoc[doc];
+    var allSent=pts.every(function(p){return labStatus[p.id+'_'+doc]==='sent';});
+    var h='<div class="doc-block"><div class="doc-hdr">';
+    h+='<div><div class="doc-name">'+esc(doc)+'</div><div style="font-family:var(--mono);font-size:10px;color:var(--muted)">'+pts.length+' paciente'+(pts.length>1?'s':'')+'</div></div>';
+    h+='<button class="btn '+(allSent?'btn-g':'btn-s')+'" onclick="markDocSent(\''+esc(doc)+'\','+(!allSent)+')">'+(allSent?'✓ Enviado':'Marcar enviado')+'</button>';
+    h+='</div><div class="doc-pts">';
+    pts.forEach(function(p){
+      var sent=labStatus[p.id+'_'+doc]==='sent';
+      h+='<div class="doc-row '+(sent?'sent':'')+'">';
+      h+='<div style="display:flex;align-items:center;gap:9px"><span class="doc-bed">'+esc(p.cama)+'</span><span style="font-size:12px;font-weight:600">'+esc(p.nombre)+'</span>'+(p.dx?'<span style="font-size:10px;color:var(--muted);font-family:var(--mono)">'+esc(p.dx)+'</span>':'')+'</div>';
+      h+='<div style="display:flex;align-items:center;gap:5px">'+(sent?'<span class="badge b-a">ENVIADO</span>':'<span class="badge b-w">PENDIENTE</span>')+'<button class="btn btn-g btn-sm" onclick="togSent(\''+p.id+'\',\''+esc(doc)+'\')">'+(sent?'Desmarcar':'✓')+'</button></div>';
+      h+='</div>';
+    });
+    h+='</div></div>';
+    return h;
+  }).join('');
+}
+function togSent(pid,doc){var k=pid+'_'+doc;labStatus[k]=labStatus[k]==='sent'?'pending':'sent';persist();renderDoctorGroups();}
+function markDocSent(doc,sent){
+  patients.filter(function(p){return p.hasLabs&&p.tratantes&&p.tratantes.indexOf(doc)>-1;}).forEach(function(p){labStatus[p.id+'_'+doc]=sent?'sent':'pending';});
+  persist();renderDoctorGroups();
+}
+
+// ─── REVISION ────────────────────────────────────────────────────────────────
+function renderRevision() {
+  var sinLabs=patients.filter(function(p){return !p.hasLabs;});
+  var conPend=patients.filter(function(p){return pcnt(p)>0;});
+  var scPend=patients.filter(function(p){return missScales(p).length>0;});
+  var alto=patients.filter(function(p){return calcRisk(p).level==='critico'||calcRisk(p).level==='rojo';});
+  var totPend=conPend.reduce(function(a,p){return a+pcnt(p);},0);
+  var alerts='';
+  if(alto.length)   alerts+='<div class="alert al-d">🔴 '+alto.length+' paciente'+(alto.length>1?'s':'')+' en riesgo alto.</div>';
+  if(sinLabs.length) alerts+='<div class="alert al-w">⚠️ '+sinLabs.length+' sin labs.</div>';
+  if(totPend)       alerts+='<div class="alert al-i">📋 '+totPend+' pendientes en '+conPend.length+' paciente'+(conPend.length>1?'s':'')+'.</div>';
+  if(scPend.length) alerts+='<div class="alert al-pk">📊 '+scPend.length+' con escalas pendientes.</div>';
+  document.getElementById('revAlerts').innerHTML=alerts;
+  var list=document.getElementById('revisionList');
+  if(!patients.length){list.innerHTML='<div class="empty"><div class="empty-icon">📋</div>Sin pacientes.</div>';return;}
+  var sorted=patients.slice().sort(function(a,b){
+    var rl={'critico':0,'rojo':1,'amarillo':2,'verde':3};
+    return (rl[calcRisk(a).level]||2)-(rl[calcRisk(b).level]||2);
+  });
+  list.innerHTML=sorted.map(function(p){
+    var dias=diasEst(p.ingreso), pc2=pcnt(p), ms=missScales(p), risk2=calcRisk(p);
+    var da=getDeviceAlerts(p);
+    return '<div class="rev-item '+(p.hasLabs?'':'nl')+'">'
+      +'<div><div class="pbed">'+esc(p.cama)+'<small>CAMA</small></div>'
+      +(dias!==null?'<span class="estancia" style="margin-top:4px;display:inline-block">DÍA '+dias+'</span>':'')+'</div>'
+      +'<div><div class="pname">'+esc(p.nombre)+'</div>'
+      +'<div class="pmeta">'+(p.tratantes&&p.tratantes.length?p.tratantes.map(esc).join(' · '):'—')+'</div>'
+      +'<div class="pbadges" style="margin-top:4px">'
+      +'<span class="risk-pill '+risk2.level+'">'+risk2.level.toUpperCase()+'</span>'
+      +(p.hasLabs?'<span class="badge b-ok">LABS ✓</span>':'<span class="badge b-no">SIN LABS</span>')
+      +(pc2?'<span class="badge b-p">'+pc2+' PEND</span>':'')
+      +(ms.length?'<span class="badge b-pk">⚠ '+ms.map(function(s){return s.name;}).join(', ')+'</span>':'')
+      +(da.length?'<span class="badge b-w">⚠ DISP</span>':'')
+      +'</div></div>'
+      +'<button class="btn '+(p.hasLabs?'btn-w':'btn-s')+' btn-sm" onclick="togLabsRev(\''+p.id+'\')">'+(p.hasLabs?'Quitar':'+ Labs')+'</button>'
+      +'</div>';
+  }).join('');
+}
+function togLabsRev(id){var p=patients.find(function(x){return x.id===id;});if(!p)return;p.hasLabs=!p.hasLabs;persist();renderRevision();}
+
+
+// ─── SEMÁFORO DE RIESGO ───────────────────────────────────────────────────────
+
+
+function semCls(level){
+  var map={verde:'sem-verde',amarillo:'sem-amarillo',rojo:'sem-rojo',critico:'sem-critico'};
+  return 'semaforo '+(map[level]||'sem-verde');
+}
+
+function devAlerts(p){
+  var alerts=[];
+  DEV_TYPES.forEach(function(dt){
+    if(!dt.maxDays)return;
+    ((p.devices||{})[dt.key]||[]).forEach(function(d){
+      var days=Math.max(1,Math.floor((Date.now()-new Date(d.date+'T00:00:00'))/86400000)+1);
+      if(days>dt.maxDays)alerts.push({name:d.name,days:days,type:dt.label,max:dt.maxDays});
+    });
+  });
+  return alerts;
+}
+
+// ─── SESIONES ACADÉMICAS ──────────────────────────────────────────────────────
+var TIPO_LABELS={tema:'📚 Tema',caso:'🏥 Caso',clase:'🎓 Clase',referencia:'📄 Referencia'};
+
+function saveSesion(){
+  var title=document.getElementById('sesTitle').value.trim();
+  if(!title){alert('El título es requerido');return;}
+  if(!sessions)sessions=[];
+  sessions.unshift({
+    id:uid(),title:title,
+    tipo:document.getElementById('sesTipo').value,
+    body:document.getElementById('sesBody').value.trim(),
+    date:new Date().toLocaleDateString('es-MX',{day:'numeric',month:'short',year:'numeric'})
+  });
+  document.getElementById('sesTitle').value='';
+  document.getElementById('sesBody').value='';
+  persist();renderSessions();
+}
+
+function delSesion(sid){
+  showConfirm('¿Eliminar esta sesión?',function(){
+    sessions=sessions.filter(function(s){return s.id!==sid;});
+    persist();renderSessions();
+  });
+}
+
+function renderSessions(){
+  var list=document.getElementById('sessionsList');if(!list)return;
+  if(!sessions||!sessions.length){list.innerHTML='<div class="empty"><div class="empty-icon">📚</div>Sin sesiones guardadas.</div>';return;}
+  list.innerHTML=sessions.map(function(s){
+    return '<div class="logbook-entry">'
+      +'<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:7px">'
+      +'<div><div style="font-size:13px;font-weight:700;margin-bottom:3px">'+esc(s.title)+'</div>'
+      +'<div style="display:flex;gap:6px;align-items:center">'
+      +'<span style="font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:4px;background:rgba(0,212,255,.08);color:var(--accent);border:1px solid rgba(0,212,255,.2)">'+(TIPO_LABELS[s.tipo]||s.tipo)+'</span>'
+      +'<span style="font-family:var(--mono);font-size:10px;color:var(--muted)">'+esc(s.date)+'</span>'
+      +'</div></div>'
+      +'<button class="btn-danger" style="background:transparent;border:1px solid transparent;color:var(--danger);cursor:pointer;font-size:11px;padding:3px 7px;border-radius:6px" onclick="delSesion(\''+s.id+'\')" >Eliminar</button>'
+      +'</div>'
+      +(s.body?'<div style="font-family:var(--mono);font-size:11px;line-height:1.7;white-space:pre-wrap;color:var(--text)">'+esc(s.body)+'</div>':'')
+      +'</div>';
+  }).join('');
+}
+
+// ─── LOGBOOK SAVE ─────────────────────────────────────────────────────────────
+function saveToLogbook(){
+  var outEl=document.getElementById('entregaOut');
+  if(!outEl||!outEl.textContent.trim()||(outEl.textContent.trim()==='(Presiona Generar entrega)'))
+    {alert('Primero genera la entrega de guardia.');return;}
+  if(!logbook)logbook=[];
+  var now=new Date();
+  var ingresos=patients.filter(function(p){return p.ingreso===now.toISOString().slice(0,10);}).length;
+  var procs=patients.reduce(function(a,p){return a+(p.procedures||[]).filter(function(pr){return pr.date===now.toISOString().slice(0,10);}).length;},0);
+  var atbs=patients.reduce(function(a,p){return a+(p.atb||[]).filter(function(a){return a.date===now.toISOString().slice(0,10);}).length;},0);
+  logbook.unshift({
+    id:uid(),
+    date:now.toLocaleDateString('es-MX',{weekday:'long',day:'numeric',month:'long',year:'numeric'}),
+    isoDate:now.toISOString().slice(0,10),
+    text:outEl.textContent,
+    stats:{pacientes:patients.length,ingresos:ingresos,procedimientos:procs,atbsNuevos:atbs}
+  });
+  persist();
+  renderLogbook();
+  showTab('logbook',document.querySelector('.tab[onclick*=logbook]'));
+}
+
+
+// ─── REINICIO DE DÍA ──────────────────────────────────────────────────────────
+function resetDay(){
+  showConfirm('¿Reiniciar el día? Se mantienen los pacientes pero se limpian: labs enviados, pendientes completados, imágenes, y se avanza el censo.',function(){
+    var d = today();
+    patients.forEach(function(p){
+      // Reset labs
+      p.hasLabs = false;
+      // Clear sent status for all doctors
+      Object.keys(labStatus).forEach(function(k){
+        if(k.indexOf(p.id)===0) delete labStatus[k];
+      });
+      // Clear completed pendientes (keep active ones)
+      p.pendientes = (p.pendientes||[]).filter(function(x){
+        if(x.done && !x.recurrente) return false;
+        if(x.done && x.recurrente){ x.done = false; } // reset recurrentes
+        return true;
+      });
+      // Reset imaging
+      p.imaging = {};
+      // Reset procedure results that were today (keep historical)
+      // Keep all procedures — they're historical records
+      // Mark today as new day in logbook context
+    });
+    persist();
+    renderAll();
+    // Show success
+    var badge = document.getElementById('syncBadge');
+    if(badge){ badge.style.color='var(--ac2)'; badge.textContent='✓ Día reiniciado — '+d; setTimeout(function(){ setSyncBadge('ok'); },3000); }
+  });
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+tickClock();
+renderAll();
+window.addEventListener('load', function(){
+  pullFS(function(){ renderAll(); });
+  setInterval(function(){ pullFS(function(){ smartRender(); }); }, 30000);
+});
+
+
+var SCALES = [
+  // Cardiología
+  {id:'chad2vasc2', name:'CHA₂DS₂-VASc', trg:['fibrilación auricular','fibrilacion auricular','fa ','flutter auricular']},
+  {id:'has_bled',   name:'HAS-BLED',        trg:['fibrilación auricular','fibrilacion auricular','anticoagulación','anticoagulacion']},
+  {id:'ehra',       name:'EHRA',            trg:['fibrilación auricular','fibrilacion auricular']},
+  {id:'timi_sca',   name:'TIMI (SCA)',      trg:['angina inestable','iamsest','sca','síndrome coronario','sindrome coronario','infarto']},
+  {id:'grace',      name:'GRACE',           trg:['infarto','iamcest','iamsest','sca','síndrome coronario','sindrome coronario','angina inestable']},
+  {id:'killip',     name:'Killip-Kimball',  trg:['infarto','insuficiencia cardiaca','iamcest','edema agudo pulmonar']},
+  {id:'nyha',       name:'NYHA',            trg:['insuficiencia cardiaca','falla cardiaca','ic ','cardiopatía','cardiopatia']},
+  {id:'euroscore',  name:'EUROSCORE',       trg:['cirugía cardiaca','cirugia cardiaca','bypass','revascularización','valvulopatía']},
+  {id:'braunwald',  name:'Braunwald',       trg:['angina inestable']},
+  {id:'lown',       name:'Lown-Wolf',       trg:['arritmia ventricular','extrasístoles ventriculares','tv no sostenida']},
+  {id:'stanford',   name:'Stanford',        trg:['disección aórtica','diseccion aortica','hematoma aortico']},
+  // Neurología
+  {id:'nihss',      name:'NIHSS',           trg:['evc','ictus','stroke','infarto cerebral','isquemia cerebral','hemorragia cerebral','acv']},
+  {id:'rankin',     name:'Rankin',          trg:['evc','ictus','stroke','infarto cerebral','acv','secuela neurológica']},
+  {id:'ich_score',  name:'ICH Score',       trg:['hemorragia intracerebral','hematoma intracerebral','sangrado intracerebral']},
+  {id:'fisher',     name:'Fisher',          trg:['hemorragia subaracnoidea','hsa']},
+  {id:'hunt_hess',  name:'Hunt y Hess',     trg:['hemorragia subaracnoidea','hsa']},
+  {id:'abcd2',      name:'ABCD2',           trg:['ait','ataque isquémico transitorio','ataque isquemico transitorio']},
+  {id:'glasgow',    name:'Glasgow',         trg:['encefalopatia','encefalopatía','coma','convulsión','encefalitis','deterioro neurológico','alteración de conciencia']},
+  // Neumología
+  {id:'psi',        name:'PSI/PORT',        trg:['neumonia','neumonía','nac','neumonia adquirida']},
+  {id:'curb65',     name:'CURB-65',         trg:['neumonia','neumonía','nac']},
+  {id:'smart_cop',  name:'SMART-COP',       trg:['neumonia','neumonía','nac']},
+  {id:'pesi',       name:'PESI',            trg:['tep','tromboembolismo pulmonar','embolia pulmonar']},
+  {id:'wells_tep',  name:'Wells TEP',       trg:['tep','tromboembolismo pulmonar','embolia pulmonar']},
+  {id:'geneva',     name:'Geneva',          trg:['tep','tromboembolismo pulmonar','embolia pulmonar']},
+  {id:'murray',     name:'Murray (SDRA)',   trg:['sdra','síndrome de dificultad respiratoria','lpa','lesín pulmonar aguda']},
+  {id:'gold',       name:'GOLD (EPOC)',     trg:['epoc','enfermedad pulmonar obstructiva','exacerbación epoc']},
+  {id:'decaf',      name:'DECAF',           trg:['epoc','exacerbación epoc','exacerbacion epoc']},
+  {id:'pafi',       name:'PaFi/P:F ratio',  trg:['sdra','insuficiencia respiratoria','ventilación mecánica','ventilacion mecanica','vmi']},
+  // Hepatología
+  {id:'child',      name:'Child-Pugh',      trg:['cirrosis','hepatopatia','hepatopatía','child','child-pugh','insuficiencia hepatica','insuficiencia hepática']},
+  {id:'meld',       name:'MELD',            trg:['cirrosis','hepatopatia','hepatopatía','meld','trasplante hepatico','trasplante hepático']},
+  {id:'maddrey',    name:'Maddrey',         trg:['hepatitis alcoholica','hepatitis alcóholica','maddrey']},
+  {id:'glasgow_ah', name:'Glasgow (Hep.Alc)',trg:['hepatitis alcoholica','hepatitis alcóholica']},
+  {id:'psoft',      name:'P-SOFT',          trg:['trasplante hepatico','trasplante hepático','p-soft','psoft']},
+  // Gastroenterología
+  {id:'blatchford', name:'Blatchford',      trg:['stda','hemorragia digestiva alta','hematemesis','melena']},
+  {id:'rockall',    name:'Rockall',         trg:['stda','hemorragia digestiva alta','melena']},
+  {id:'oakland',    name:'Oakland',         trg:['stdb','hemorragia digestiva baja','hematoquecia']},
+  {id:'bisap',      name:'BISAP',           trg:['pancreatitis']},
+  {id:'ranson',     name:'Ranson',          trg:['pancreatitis']},
+  {id:'balthazar',  name:'Balthazar',       trg:['pancreatitis']},
+  {id:'hinchey',    name:'Hinchey',         trg:['diverticulitis']},
+  {id:'harvey',     name:'Harvey-Bradshaw', trg:['crohn','enfermedad de crohn']},
+  {id:'truelove',   name:'Truelove-Witts',  trg:['cuci','colitis ulcerosa','colitis ulcerativa']},
+  {id:'atlas',      name:'ATLAS',           trg:['clostridium','clostridioides','c. difficile','cdiff']},
+  // Nefrologoía
+  {id:'kdigo_aki',  name:'KDIGO (LRA)',     trg:['lra','lesión renal aguda','lesion renal aguda','aki','kdigo']},
+  {id:'ckd_epi',    name:'CKD-EPI',         trg:['enfermedad renal crónica','erc','insuficiencia renal crónica']},
+  // Sepsis / UCI
+  {id:'sofa',       name:'SOFA',            trg:['sepsis','séptico','septico','choque','shock','bacteremia','infección','infeccion','neumonia','neumonía','peritonitis']},
+  {id:'qsofa',      name:'qSOFA',           trg:['sepsis','séptico','septico','infección','infeccion']},
+  {id:'apache',     name:'APACHE II',       trg:['sepsis','séptico','septico','choque','shock','ventilado','intubado','ucia','terapia intensiva']},
+  // Trombosis
+  {id:'wells_tvp',  name:'Wells TVP',       trg:['tvp','trombosis venosa profunda','trombosis venosa']},
+  {id:'caprini',    name:'CAPRINI',         trg:['tvp','trombosis venosa profunda','riesgo tromboembólico','profilaxis']},
+  {id:'padua',      name:'Padua',           trg:['tvp','tromboprofilaxis','riesgo trombótico','paciente médico hospitalizado']},
+  // Oncología
+  {id:'karnofsky',  name:'Karnofsky',       trg:['cáncer','cancer','tumor','neoplasia','oncológico','oncologico']},
+  {id:'ecog',       name:'ECOG',            trg:['cáncer','cancer','tumor','neoplasia','oncológico','oncologico']},
+  {id:'ipi',        name:'IPI',             trg:['linfoma','linfoma no hodgkin']},
+  // Reumatología
+  {id:'sledai',     name:'SLEDAI-2K',       trg:['lupus','les','lupus eritematoso']},
+  {id:'das28',      name:'DAS28',           trg:['artritis reumatoide','artritis reumatoidea']},
+  {id:'basdai',     name:'BASDAI',          trg:['espondiloartritis','espondilitis anquilosante']},
+  // Otros
+  {id:'mcmahon',    name:'McMahon',         trg:['rabdomiolisis','rabdomiólisis','mioglobinuria','cpk']},
+  {id:'mascc',      name:'MASCC',           trg:['fiebre','neutropenia','neutropenia febril']},
+  {id:'cisne',      name:'CISNE',           trg:['neutropenia febril','fiebre y neutropenia']},
+  {id:'wagner',     name:'Wagner',          trg:['pie diabético','pie diabetico','úlcera diabética']},
+  {id:'light',      name:'Criterios de Light',trg:['derrame pleural','toracocentesis','exudado']},
+  {id:'linrec',     name:'LRINEC',          trg:['fascitis necrotizante','fascitis','celulitis necrotizante']},
+  {id:'katz',       name:'KATZ',            trg:['adulto mayor','geriátrico','funcionalidad','dependencia funcional']},
+  {id:'tinetti',    name:'Tinetti',         trg:['caídas','caidas','adulto mayor','marcha','equilibrio']},
+  {id:'cromi',      name:'CROMI',           trg:['influenza','gripe']},
+  {id:'kdigo_ec',   name:'KDIGO (ERC)',     trg:['enfermedad renal crónica','erc','proteinuria']},
+];
+
+var SCALE_EXTRACT_PATTERNS = [
+  {id:'sofa',      re:/sofa\s*(\d+)\s*(?:pts?)?/i},
+  {id:'apache',    re:/apache\s*ii?\s*(\d+)/i},
+  {id:'glasgow',   re:/glasgow\s*(\d+)/i},
+  {id:'nihss',     re:/nih(?:\s*stroke)?\s*(\d+)/i},
+  {id:'psi',       re:/psi\s*(iv|iii|ii|i|v|\d+)/i},
+  {id:'curb65',    re:/curb[-\s]?65\s*(\d+)/i},
+  {id:'child',     re:/child(?:\s*[-]?\s*pugh)?\s*([abc])/i},
+  {id:'meld',      re:/meld\s*(?:3\.0\s*)?(\d+)/i},
+  {id:'bisap',     re:/bisap\s*(\d+)/i},
+  {id:'wells_tvp', re:/wells\s*tvp\s*(\d+)/i},
+  {id:'wells_tep', re:/wells\s*tep\s*(\d+)/i},
+  {id:'grace',     re:/grace\s*(\d+)/i},
+  {id:'psoft',     re:/p[-\s]?soft\s*(\d+)/i},
+  {id:'maddrey',   re:/maddrey\s*(\d+)/i},
+  {id:'ranson',    re:/ranson\s*(\d+)/i},
+  {id:'blatchford',re:/blatchford\s*(\d+)/i},
+  {id:'killip',    re:/killip\s*(?:kimball)?\s*([1-4]+)/i},
+  {id:'nyha',      re:/nyha\s*(iv|iii|ii|i|\d)/i},
+  {id:'pesi',      re:/pesi\s*(\d+)/i},
+  {id:'ich_score', re:/ich\s*score\s*(\d+)/i},
+  {id:'rankin',    re:/rankin\s*(\d+)/i},
+  {id:'kdigo_aki', re:/kdigo\s*([123])/i},
+  {id:'ecog',      re:/ecog\s*(\d)/i},
+  {id:'karnofsky', re:/karnofsky\s*(\d+)/i},
+];</script>
+</body>
+</html>
